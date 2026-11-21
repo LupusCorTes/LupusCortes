@@ -155,6 +155,14 @@
   }
   .lock{text-align:center;max-width:420px;margin:40px auto;color:#374151;font-size:14px;line-height:1.55}
   .lock .big{font-size:48px}
+  .av{background-size:cover;background-position:center}
+  .av.sm{width:22px;height:22px;font-size:11px}
+  .who{display:flex;align-items:center;gap:6px}
+  .imgbox{max-width:100%;min-height:40px;background:#d9dde3;border-radius:10px;overflow:hidden;cursor:zoom-in;margin-bottom:4px}
+  .imgbox.ok{background:none}
+  .imgbox img{width:100%;height:100%;object-fit:cover;display:block}
+  .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);display:grid;place-items:center;z-index:200;cursor:zoom-out}
+  .lightbox img{max-width:96vw;max-height:92vh;object-fit:contain}
 </style>
 </head>
 <body>
@@ -295,6 +303,111 @@ const state = { msgs:[], online:[], favs:[] };
 let typingNames = [];
 const view = $('#view');
 
+/* ================= GAMBAR & AVATAR ================= */
+const okData = s => typeof s === 'string' && s.length < 130000 && /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s);
+const imgCache = new Map(), imgLoading = new Set(), avCache = new Map(), avLoading = new Set();
+
+function readImage(file){
+  return new Promise((res, rej) => {
+    const u = URL.createObjectURL(file), im = new Image();
+    im.onload = () => { URL.revokeObjectURL(u); res(im); };
+    im.onerror = () => { URL.revokeObjectURL(u); rej(new Error('Gambar tidak bisa dibaca.')); };
+    im.src = u;
+  });
+}
+async function compress(file, opt){
+  if(!file || !String(file.type).startsWith('image/')) throw new Error('Pilih file berupa gambar.');
+  const im = await readImage(file);
+  let sw = im.naturalWidth, sh = im.naturalHeight, sx = 0, sy = 0;
+  if(opt.square){ const s = Math.min(sw,sh); sx = (sw-s)/2; sy = (sh-s)/2; sw = sh = s; }
+  let scale = Math.min(1, opt.max / Math.max(sw,sh)), q = 0.7;
+  for(let i=0; i<6; i++){
+    const w = Math.max(1, Math.round(sw*scale)), h = Math.max(1, Math.round(sh*scale));
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0,0,w,h); g.drawImage(im, sx,sy,sw,sh, 0,0,w,h);
+    const data = c.toDataURL('image/jpeg', q);
+    if(data.length <= opt.limit) return { data, w, h };
+    q = Math.max(0.4, q-0.1); scale *= 0.85;
+  }
+  throw new Error('Gambar terlalu besar, coba gambar lain.');
+}
+
+function avHTML(uid, name, gender, size){
+  const d = avCache.get(uid);
+  const st = d ? ` style="background-image:url(${d})"` : '';
+  return `<div class="av ${gender==='Perempuan'?'f':'m'}${size?' '+size:''}" data-av="${esc(uid)}"${st}>${d ? '' : esc((name||'?')[0].toUpperCase())}</div>`;
+}
+function paintAv(uid){
+  const d = avCache.get(uid); if(!d) return;
+  document.querySelectorAll('[data-av="'+CSS.escape(uid)+'"]').forEach(el => { el.style.backgroundImage = 'url('+d+')'; el.textContent = ''; });
+}
+function hydrateAvatars(root){
+  (root || document).querySelectorAll('[data-av]').forEach(el => {
+    const uid = el.dataset.av;
+    if(avCache.has(uid)){ if(avCache.get(uid) && !el.style.backgroundImage) paintAv(uid); return; }
+    if(avLoading.has(uid)) return;
+    avLoading.add(uid);
+    get(ref(db,'avatars/'+uid))
+      .then(s => { const v = s.val(); avCache.set(uid, okData(v) ? v : null); })
+      .catch(() => avCache.set(uid, null))
+      .finally(() => { avLoading.delete(uid); paintAv(uid); });
+  });
+}
+
+const imgObserver = ('IntersectionObserver' in window)
+  ? new IntersectionObserver(es => es.forEach(en => { if(en.isIntersecting){ imgObserver.unobserve(en.target); loadMsgImg(en.target.dataset.img); } }), { rootMargin:'200px' })
+  : null;
+function paintImg(id){
+  const d = imgCache.get(id); if(!d) return;
+  document.querySelectorAll('.imgbox[data-img="'+CSS.escape(id)+'"]').forEach(b => {
+    if(b.querySelector('img')) return;
+    const im = document.createElement('img'); im.src = d; im.alt = ''; b.appendChild(im); b.classList.add('ok');
+  });
+}
+function loadMsgImg(id){
+  if(imgCache.has(id)){ paintImg(id); return; }
+  if(imgLoading.has(id)) return;
+  imgLoading.add(id);
+  get(ref(db,'images/'+id))
+    .then(s => { const v = s.val(); imgCache.set(id, v && okData(v.data) ? v.data : null); })
+    .catch(() => imgCache.set(id, null))
+    .finally(() => { imgLoading.delete(id); paintImg(id); });
+}
+function hydrateImages(){
+  document.querySelectorAll('.imgbox:not(.ok)').forEach(b => {
+    const id = b.dataset.img;
+    if(imgCache.has(id)) paintImg(id);
+    else if(imgObserver) imgObserver.observe(b);
+    else loadMsgImg(id);
+  });
+}
+function lightbox(src){
+  const d = document.createElement('div'); d.className = 'lightbox';
+  const im = document.createElement('img'); im.src = src; im.alt = ''; d.appendChild(im);
+  d.onclick = () => d.remove(); document.body.appendChild(d);
+}
+
+let sendingImg = false;
+async function sendImage(file, caption){
+  if(sendingImg){ toast('Tunggu gambar sebelumnya selesai...'); return false; }
+  sendingImg = true;
+  try{
+    toast('Memproses gambar...');
+    const { data, w, h } = await compress(file, { max:640, limit:90000 });
+    const id = push(ref(db,'images')).key;
+    await set(ref(db,'images/'+id), { uid:me.uid, data });
+    imgCache.set(id, data);
+    const msg = { uid:me.uid, username:me.username, gender:me.gender, age:me.age, img:id, iw:w, ih:h, time:serverTimestamp() };
+    if(caption) msg.text = caption;
+    await push(ref(db,'messages'), msg);
+    return true;
+  }catch(e){
+    const m = String((e && e.message) || '');
+    toast(m && !m.includes('PERMISSION') ? m : 'Gambar gagal terkirim. Pastikan Rules terbaru sudah di-Publish.');
+    return false;
+  }finally{ sendingImg = false; }
+}
+
 /* ================= DAFTAR / MASUK ================= */
 for(let a=13; a<=70; a++){ const o=document.createElement('option'); o.value=a; o.textContent=a+' tahun'; $('#rAge').appendChild(o); }
 
@@ -374,7 +487,7 @@ const MENUS = [
   {id:'chat',    ic:'💬', t:'Chat Global'},
   {id:'online',  ic:'🟢', t:'Anggota Online'},
   {id:'fav',     ic:'⭐', t:'Favorit'},
-  {id:'upload',  ic:'📤', t:'Upload File'},
+  {id:'upload',  ic:'🖼️', t:'Kirim Gambar'},
   {id:'search',  ic:'🔍', t:'Pencarian'},
   {id:'prompts', ic:'✨', t:'Template Pesan'},
   {id:'emoji',   ic:'😀', t:'Emoji'},
@@ -486,14 +599,22 @@ function scheduleDraw(force){
 }
 function msgHTML(m){
   const mine = m.uid === me.uid;
-  const who = mine ? '' : `<div class="who">${gIcon(m.gender)} ${esc(m.username)} · ${esc(m.age)} th</div>`;
+  const who = mine ? '' : `<div class="who">${avHTML(m.uid, m.username, m.gender, 'sm')}<span>${gIcon(m.gender)} ${esc(m.username)} · ${esc(m.age)} th</span></div>`;
+  let body = '';
+  if(m.img){
+    const iw = Number(m.iw) || 240, ih = Number(m.ih) || 240;
+    const w = Math.min(Math.max(iw, 60), 240), r = Math.min(Math.max(iw/ih, 0.3), 3);
+    body += `<div class="imgbox" data-img="${esc(m.img)}" style="width:${w}px;aspect-ratio:${r.toFixed(3)}"></div>`;
+  }
+  if(m.text) body += `<div>${esc(m.text)}</div>`;
   const fav = state.favs.some(f => f.id === m.id);
-  return `<div class="msg ${mine?'me':'ot'}">${who}<div>${esc(m.text)}</div><small>${m.time ? fmtTime(m.time) : ''}</small><button class="star" data-id="${esc(m.id)}">${fav?'⭐':'☆'}</button></div>`;
+  return `<div class="msg ${mine?'me':'ot'}">${who}${body}<small>${m.time ? fmtTime(m.time) : ''}</small><button class="star" data-id="${esc(m.id)}">${fav?'⭐':'☆'}</button></div>`;
 }
 function drawMsgs(force){
   const box = $('#msgs'); if(!box) return;
   const near = box.scrollHeight - box.scrollTop - box.clientHeight < 140;
   box.innerHTML = state.msgs.length ? state.msgs.map(msgHTML).join('') : empty('💬','Belum ada pesan.<br>Jadi yang pertama menyapa!');
+  hydrateAvatars(box); hydrateImages();
   if(force || near) box.scrollTop = box.scrollHeight;
 }
 function drawTyping(){
@@ -509,7 +630,7 @@ function toggleFav(id){
   if(i >= 0) state.favs.splice(i,1);
   else{
     const m = state.msgs.find(x => x.id === id); if(!m) return;
-    state.favs.push({ id:m.id, username:m.username, text:m.text, time:m.time });
+    state.favs.push({ id:m.id, username:m.username, text:m.text || '📷 Gambar', time:m.time });
   }
   ls.set('cg_fav_'+me.uid, JSON.stringify(state.favs));
   badges();
@@ -524,9 +645,10 @@ V.chat = () => {
     <div class="msgs" id="msgs"></div>
     <div class="typing" id="typing"></div>
     <div class="composer">
+      <button class="btn ghost" id="pic" title="Kirim gambar">🖼️</button>
       <input type="text" id="inp" placeholder="Tulis pesan untuk semua..." autocomplete="off" maxlength="1000">
       <button class="btn" id="send">Kirim</button>
-    </div></div>`;
+    </div></div><input type="file" id="picImg" accept="image/*" hidden>`;
   const inp = $('#inp');
   const send = async () => {
     const v = inp.value.trim();
@@ -545,7 +667,18 @@ V.chat = () => {
     if(!iType){ iType = true; setTyping(true); }
     clearTimeout(tTimer); tTimer = setTimeout(stopTyping, 2500);
   };
-  $('#msgs').onclick = e => { const b = e.target.closest('.star'); if(b) toggleFav(b.dataset.id); };
+  $('#msgs').onclick = e => {
+    const im = e.target.closest('.imgbox img'); if(im){ lightbox(im.src); return; }
+    const b = e.target.closest('.star'); if(b) toggleFav(b.dataset.id);
+  };
+  $('#pic').onclick = () => $('#picImg').click();
+  $('#picImg').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if(!f) return;
+    stopTyping();
+    const ok = await sendImage(f, inp.value.trim());
+    if(ok) inp.value = '';
+  };
   if(pendingText){ inp.value = pendingText; pendingText = ''; }
   drawMsgs(true); drawTyping();
   if(window.matchMedia('(min-width:761px)').matches) inp.focus();
@@ -554,10 +687,10 @@ V.chat = () => {
 V.online = () => {
   const l = state.online;
   view.innerHTML = `<h2 style="margin-top:0">${l.length} anggota online</h2><div class="list">` +
-    l.map(u=>`<div class="card"><div class="av ${u.gender==='Perempuan'?'f':'m'}">${esc(u.username[0].toUpperCase())}</div>
+    l.map(u=>`<div class="card">${avHTML(u.id, u.username, u.gender)}
       <div class="info"><b>${esc(u.username)}${u.id===me.uid?' (kamu)':''}</b><span>${esc(u.gender)} • ${esc(u.age)} tahun</span></div><span class="dot"></span></div>`).join('') + '</div>';
+  hydrateAvatars(view);
 };
-
 V.fav = () => {
   view.innerHTML = state.favs.length
     ? `<div class="list">${state.favs.map(f=>`<div class="card"><div class="info"><b>⭐ ${esc(f.username)}</b><span style="white-space:normal">${esc(f.text)} • ${f.time?fmtTime(f.time):''}</span></div><button class="btn ghost" data-del="${esc(f.id)}">✖</button></div>`).join('')}</div>`
@@ -566,11 +699,30 @@ V.fav = () => {
 };
 
 V.upload = () => {
-  view.innerHTML = `<div class="lock"><div class="big">🔒</div><h2 style="margin:6px 0">Upload file belum aktif</h2>
-    <p>Aplikasi ini memakai paket Firebase <b>Spark</b> (gratis). Di paket itu penyimpanan file (Cloud Storage) tidak tersedia, jadi fitur upload dimatikan.</p>
-    <p style="margin-top:8px">Untuk mengaktifkannya, proyek harus pindah ke paket Blaze lalu fitur upload ditambahkan.</p></div>`;
+  view.innerHTML = `<div class="lock" style="margin-top:10px"><div class="big">🖼️</div><h2 style="margin:6px 0">Kirim Gambar</h2>
+    <p>Pilih gambar dari galeri, lalu kirim ke Chat Global. Gambar dikecilkan otomatis.</p>
+    <div id="pv" style="margin:14px 0"></div>
+    <input class="field" id="cap" placeholder="Keterangan (opsional)" maxlength="200">
+    <button class="btn" id="pick">Pilih gambar</button> <button class="btn" id="go" hidden>Kirim ke chat</button>
+    <p style="margin-top:14px;font-size:12.5px;color:var(--muted)">Hanya gambar yang bisa dikirim. Pengiriman file lain tidak tersedia di paket gratis.</p></div>
+    <input type="file" id="f" accept="image/*" hidden>`;
+  let file = null;
+  $('#pick').onclick = () => $('#f').click();
+  $('#f').onchange = e => {
+    file = e.target.files[0] || null; e.target.value = '';
+    if(!file) return;
+    const u = URL.createObjectURL(file);
+    $('#pv').innerHTML = `<img src="${u}" alt="" style="max-width:100%;max-height:260px;border-radius:12px">`;
+    $('#go').hidden = false;
+  };
+  $('#go').onclick = async () => {
+    if(!file) return;
+    $('#go').disabled = true;
+    const ok = await sendImage(file, $('#cap').value.trim());
+    $('#go').disabled = false;
+    if(ok){ toast('Gambar terkirim'); go('chat'); }
+  };
 };
-
 V.search = () => {
   view.innerHTML = `<input class="search field" id="q" placeholder="Cari pesan atau anggota online..."><div id="res"></div>`;
   $('#q').oninput = e => {
@@ -579,12 +731,12 @@ V.search = () => {
     const m = state.msgs.filter(x => (x.text||'').toLowerCase().includes(q) || (x.username||'').toLowerCase().includes(q)).slice(-30);
     const u = state.online.filter(x => x.username.toLowerCase().includes(q));
     $('#res').innerHTML = (m.length||u.length)
-      ? (m.length ? '<h2>Pesan</h2><div class="list">'+m.map(x=>`<div class="card"><div class="info"><b>${esc(x.username)}</b><span style="white-space:normal">${esc(x.text)} • ${x.time?fmtTime(x.time):''}</span></div></div>`).join('')+'</div>' : '') +
-        (u.length ? '<h2>Anggota online</h2><div class="list">'+u.map(x=>`<div class="card"><div class="av ${x.gender==='Perempuan'?'f':'m'}">${esc(x.username[0].toUpperCase())}</div><div class="info"><b>${esc(x.username)}</b><span>${esc(x.gender)} • ${esc(x.age)} tahun</span></div></div>`).join('')+'</div>' : '')
+      ? (m.length ? '<h2>Pesan</h2><div class="list">'+m.map(x=>`<div class="card"><div class="info"><b>${esc(x.username)}</b><span style="white-space:normal">${esc(x.text||'📷 Gambar')} • ${x.time?fmtTime(x.time):''}</span></div></div>`).join('')+'</div>' : '') +
+        (u.length ? '<h2>Anggota online</h2><div class="list">'+u.map(x=>`<div class="card">${avHTML(x.id, x.username, x.gender)}<div class="info"><b>${esc(x.username)}</b><span>${esc(x.gender)} • ${esc(x.age)} tahun</span></div></div>`).join('')+'</div>' : '')
       : empty('🔍','Tidak ditemukan');
+    hydrateAvatars($('#res'));
   };
 };
-
 V.prompts = () => {
   const P = ['Halo semuanya! 👋','Ada yang online?','Selamat pagi semua ☀️','Selamat malam semua 🌙','Terima kasih ya 🙏','Ada yang mau ngobrol bareng?'];
   view.innerHTML = `<div class="list">${P.map(p=>`<div class="card" style="cursor:pointer" data-p="${esc(p)}"><div style="font-size:22px">✨</div><div class="info"><b>${esc(p)}</b><span>Ketuk untuk dipakai di chat</span></div></div>`).join('')}</div>`;
@@ -598,13 +750,33 @@ V.emoji = () => {
 };
 
 V.profile = () => {
-  view.innerHTML = `<div class="profile"><div class="av big ${me.gender==='Perempuan'?'f':'m'}">${esc(me.username[0].toUpperCase())}</div>
+  view.innerHTML = `<div class="profile">${avHTML(me.uid, me.username, me.gender, 'big')}
     <h2 style="margin:0">${esc(me.username)}</h2>
+    <div style="margin:12px 0"><button class="btn" id="chg">Ganti foto profil</button> <button class="btn ghost" id="del">Hapus foto</button></div>
     <div class="row"><span>Gender</span><b>${esc(me.gender)}</b></div>
     <div class="row"><span>Umur</span><b>${esc(me.age)} tahun</b></div>
-    <div class="row"><span>Pesan di layar</span><b>${state.msgs.filter(m=>m.uid===me.uid).length}</b></div></div>`;
+    <div class="row"><span>Pesan di layar</span><b>${state.msgs.filter(m=>m.uid===me.uid).length}</b></div></div>
+    <input type="file" id="f" accept="image/*" hidden>`;
+  hydrateAvatars(view);
+  $('#chg').onclick = () => $('#f').click();
+  $('#f').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if(!f) return;
+    try{
+      const { data } = await compress(f, { max:160, square:true, limit:30000 });
+      await set(ref(db,'avatars/'+me.uid), data);
+      avCache.set(me.uid, data); paintAv(me.uid);
+      toast('Foto profil diperbarui');
+    }catch(ex){
+      const m = String((ex && ex.message) || '');
+      toast(m && !m.includes('PERMISSION') ? m : 'Gagal menyimpan. Pastikan Rules terbaru sudah di-Publish.');
+    }
+  };
+  $('#del').onclick = async () => {
+    try{ await remove(ref(db,'avatars/'+me.uid)); avCache.set(me.uid, null); render(); toast('Foto dihapus'); }
+    catch(ex){ toast('Gagal menghapus foto'); }
+  };
 };
-
 V.settings = () => {
   view.innerHTML = `<div class="row"><span>Bunyi saat ada pesan baru</span><input type="checkbox" id="snd" ${ls.get('cg_sound')==='0'?'':'checked'} style="width:20px;height:20px"></div>
     <div class="row"><span>Hapus semua favorit</span><button class="btn ghost" id="cf">Hapus</button></div>
@@ -624,7 +796,8 @@ V.help = () => {
     ['Siapa yang bisa melihat chat?','Semua anggota yang sudah terdaftar. Gender dan umur kamu ikut terlihat.'],
     ['Apa arti animasi tiga titik?','Itu tanda ada anggota lain yang sedang mengetik.'],
     ['Cara menyimpan pesan?','Ketuk bintang di pojok pesan, lalu lihat di menu Favorit. Favorit tersimpan di browser ini saja.'],
-    ['Kenapa upload file terkunci?','Aplikasi memakai paket gratis Firebase yang tidak menyediakan penyimpanan file.'],
+    ['Bisa kirim apa saja?','Teks dan gambar. Gambar dikecilkan otomatis. File lain (PDF, dll) tidak tersedia karena paket gratis Firebase tidak menyediakan penyimpanan file.'],
+    ['Cara ganti foto profil?','Buka menu Profil, ketuk Ganti foto profil, lalu pilih gambar dari galeri.'],
     ['Lupa password?','Belum ada fitur pemulihan karena akun memakai username saja. Hubungi pemilik aplikasi.']
   ];
   view.innerHTML = H.map(h=>`<details><summary>${h[0]}</summary><p>${h[1]}</p></details>`).join('');
