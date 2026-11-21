@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<meta name="theme-color" content="#3b82f6">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png">
+<title>Chat Global</title>
+<style>
+  :root{
+    --bg:#ffffff; --side:#eceef1; --side-hover:#dde0e5; --side-active:#ffffff;
+    --text:#1f2328; --muted:#6b7280; --accent:#3b82f6; --border:#e3e5e8; --side-w:260px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  [hidden]{display:none!important}
+  html,body{height:100%}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+
+  /* ===== AUTH ===== */
+  .auth{position:fixed;inset:0;background:#fff;overflow-y:auto;display:flex;padding:24px 16px;z-index:50}
+  .auth-card{width:100%;max-width:400px;margin:auto;animation:fadeUp .5s ease}
+  .auth-logo{width:60px;height:60px;border-radius:18px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:30px;margin:0 auto 10px;animation:pop .6s ease}
+  .auth h1{text-align:center;font-size:22px}
+  .auth p.sub{text-align:center;color:var(--muted);font-size:13.5px;margin-top:4px}
+  .tabs{display:flex;background:var(--side);border-radius:12px;padding:4px;margin:18px 0 14px}
+  .tabs button{flex:1;border:none;background:transparent;padding:10px;border-radius:9px;font-size:14px;cursor:pointer;transition:all .25s}
+  .tabs button.on{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.1);color:var(--accent);font-weight:600}
+  .seg{display:flex;gap:8px;margin-bottom:10px}
+  .seg button{flex:1;border:1px solid var(--border);background:#fff;padding:11px;border-radius:10px;cursor:pointer;font-size:14px;transition:all .2s}
+  .seg button.on{border-color:var(--accent);background:#eff6ff;color:var(--accent);font-weight:600;transform:scale(1.02)}
+  label.l{display:block;font-size:12.5px;color:var(--muted);margin:4px 0}
+  .pw{position:relative}
+  .pw .field{padding-right:42px}
+  .pw button{position:absolute;right:6px;top:5px;border:none;background:transparent;cursor:pointer;font-size:17px;padding:4px 6px}
+  .err{color:#dc2626;font-size:13px;min-height:18px;margin:6px 0}
+  .note{font-size:12px;color:var(--muted);margin-top:10px;text-align:center}
+  .btn.full{width:100%;padding:12px;font-size:15px}
+
+  /* ===== APP LAYOUT ===== */
+  #app{display:flex;width:100%;height:100vh;height:100dvh}
+
+  .sidebar{
+    width:var(--side-w);background:var(--side);height:100%;display:flex;flex-direction:column;
+    border-right:1px solid var(--border);transition:transform .35s cubic-bezier(.4,0,.2,1);
+    z-index:20;flex-shrink:0;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:18px 16px;font-weight:700;font-size:17px}
+  .brand .logo{width:34px;height:34px;border-radius:10px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:18px;animation:pop .6s ease}
+  .menu{flex:1;overflow-y:auto;padding:6px 10px 12px}
+  .menu::-webkit-scrollbar{width:4px}
+  .menu::-webkit-scrollbar-thumb{background:#c5c9cf;border-radius:4px}
+  .item{
+    display:flex;align-items:center;gap:12px;padding:10px 12px;margin:2px 0;border-radius:10px;cursor:pointer;
+    font-size:14.5px;color:#374151;position:relative;opacity:0;transform:translateX(-20px);
+    animation:slideIn .45s ease forwards;transition:background .2s,transform .2s,color .2s;user-select:none;
+  }
+  .item .ic{font-size:18px;width:24px;text-align:center;transition:transform .25s}
+  .item:hover{background:var(--side-hover);transform:translateX(4px)}
+  .item:hover .ic{transform:scale(1.2) rotate(-6deg)}
+  .item.active{background:var(--side-active);color:var(--accent);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .item.active::before{content:"";position:absolute;left:-10px;top:20%;height:60%;width:4px;border-radius:0 4px 4px 0;background:var(--accent);animation:grow .3s ease}
+  .item .badge{margin-left:auto;background:var(--accent);color:#fff;border-radius:20px;font-size:11px;padding:1px 8px;display:none}
+  .item .badge.show{display:inline-block;animation:pop .3s}
+  .side-foot{padding:12px 16px;border-top:1px solid var(--border);font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+
+  @keyframes slideIn{to{opacity:1;transform:translateX(0)}}
+  @keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+  @keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+
+  .main{flex:1;display:flex;flex-direction:column;height:100%;min-width:0;background:var(--bg)}
+  .topbar{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border)}
+  .topbar h1{font-size:18px;font-weight:600}
+  .status{margin-left:auto;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .burger{display:none;border:none;background:var(--side);width:38px;height:38px;border-radius:10px;font-size:20px;cursor:pointer}
+  .view{flex:1;min-height:0;overflow-y:auto;padding:20px;animation:fadeUp .35s ease}
+  .view.chatmode{overflow:hidden;display:flex;flex-direction:column;padding:12px 14px}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .3s;z-index:15}
+
+  .dot{width:9px;height:9px;border-radius:50%;background:#22c55e;display:inline-block;flex-shrink:0}
+  .dot.off{background:#f59e0b}
+
+  /* ===== CHAT ===== */
+  .chat-wrap{flex:1;min-height:0;display:flex;flex-direction:column}
+  .msgs{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:6px 4px 10px}
+  .msg{max-width:78%;padding:9px 13px;border-radius:14px;font-size:14.5px;line-height:1.45;animation:fadeUp .3s ease;position:relative;word-break:break-word}
+  .msg.me{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+  .msg.ot{align-self:flex-start;background:var(--side);border-bottom-left-radius:4px}
+  .msg.me a{color:#fff}
+  .msg small{display:block;opacity:.65;font-size:11px;margin-top:4px}
+  .who{font-size:12px;font-weight:600;margin-bottom:3px;color:#4b5563}
+  .gm{color:#3b82f6}.gf{color:#ec4899}
+  .msg .star{position:absolute;top:-8px;right:-8px;background:#fff;border:1px solid var(--border);border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;display:grid;place-items:center;opacity:.0;transition:opacity .2s}
+  .msg:hover .star,.msg .star:focus{opacity:1}
+  @media(hover:none){.msg .star{opacity:.85}}
+  .chatimg{display:block;max-width:100%;max-height:240px;border-radius:10px;margin-top:4px}
+  a.fl{display:inline-block;text-decoration:none;color:inherit;font-size:14px}
+  a.fl span{opacity:.7;font-size:12px}
+  .typing{min-height:28px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px;padding:2px 4px}
+  .dots{display:inline-flex;gap:3px;background:var(--side);padding:7px 10px;border-radius:12px;animation:fadeUp .25s ease}
+  .dots i{width:6px;height:6px;border-radius:50%;background:#9aa1ab;animation:bounce 1.2s infinite}
+  .dots i:nth-child(2){animation-delay:.15s}
+  .dots i:nth-child(3){animation-delay:.3s}
+  .composer{display:flex;gap:8px;align-items:center;border:1px solid var(--border);border-radius:14px;padding:8px;background:#fff}
+  .composer input[type=text]{flex:1;min-width:0;border:none;outline:none;font-size:15px;padding:8px;background:transparent}
+
+  .btn{border:none;cursor:pointer;border-radius:10px;padding:9px 14px;font-size:14px;background:var(--accent);color:#fff;transition:transform .15s,opacity .2s}
+  .btn:active{transform:scale(.94)}
+  .btn:disabled{opacity:.6}
+  .btn.ghost{background:var(--side);color:var(--text)}
+  .btn.danger{background:#ef4444}
+
+  /* ===== LIST / CARD ===== */
+  .list{display:flex;flex-direction:column;gap:8px}
+  .card{border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;animation:fadeUp .3s ease;transition:box-shadow .2s,transform .2s}
+  .card:hover{box-shadow:0 3px 10px rgba(0,0,0,.07);transform:translateY(-2px)}
+  .card .info{flex:1;min-width:0}
+  .card .info b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card .info span{font-size:12px;color:var(--muted)}
+  .thumb{width:48px;height:48px;border-radius:8px;object-fit:cover;background:var(--side);flex-shrink:0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+  .grid a{display:block;animation:fadeUp .3s ease}
+  .grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;display:block}
+  .grid span{font-size:11px;color:var(--muted)}
+  .empty{text-align:center;color:var(--muted);margin-top:60px;font-size:14px}
+  .empty .big{font-size:48px;margin-bottom:8px}
+  .av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;flex-shrink:0}
+  .av.m{background:#3b82f6}.av.f{background:#ec4899}
+  .av.big{width:80px;height:80px;font-size:32px;margin:0 auto 10px}
+
+  .drop{border:2px dashed #c5c9cf;border-radius:16px;padding:40px 16px;text-align:center;cursor:pointer;transition:all .25s}
+  .drop:hover,.drop.over{border-color:var(--accent);background:#eff6ff;transform:scale(1.01)}
+  .drop .big{font-size:44px}
+  .progress{height:6px;background:var(--side);border-radius:6px;overflow:hidden;margin-top:6px}
+  .progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+
+  h2{font-size:16px;margin:16px 0 8px}
+  input.search,select.field,.field{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;font-size:14.5px;outline:none;margin-bottom:10px;background:#fff;font-family:inherit}
+  .field:focus,input.search:focus{border-color:var(--accent)}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);font-size:14px}
+  details{border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px}
+  summary{cursor:pointer;font-weight:600;font-size:14px}
+  details p{margin-top:8px;font-size:13.5px;color:var(--muted)}
+  .profile{text-align:center;max-width:360px;margin:10px auto}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;z-index:99;animation:fadeUp .3s ease;max-width:90%}
+
+  @media(max-width:760px){
+    .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);box-shadow:4px 0 20px rgba(0,0,0,.15)}
+    body.open .sidebar{transform:translateX(0)}
+    body.open .overlay{opacity:1;pointer-events:auto}
+    .burger{display:block}
+    .msg{max-width:90%}
+  }
+  .lock{text-align:center;max-width:420px;margin:40px auto;color:#374151;font-size:14px;line-height:1.55}
+  .lock .big{font-size:48px}
+</style>
+</head>
+<body>
+
+<!-- ===== LAYAR DAFTAR / MASUK ===== -->
+<div class="auth" id="auth" hidden>
+  <div class="auth-card">
+    <div class="auth-logo">💬</div>
+    <h1>Chat Global</h1>
+    <p class="sub">Ngobrol bareng semua orang, realtime</p>
+
+    <div class="tabs">
+      <button class="on" data-tab="reg">Daftar</button>
+      <button data-tab="log">Masuk</button>
+    </div>
+
+    <form id="fReg" autocomplete="off">
+      <label class="l">Gender</label>
+      <div class="seg" id="seg">
+        <button type="button" data-g="Laki-laki">♂ Laki-laki</button>
+        <button type="button" data-g="Perempuan">♀ Perempuan</button>
+      </div>
+      <label class="l">Username</label>
+      <input class="field" id="rUser" maxlength="20" placeholder="3-20 karakter (huruf, angka, _)" autocapitalize="off">
+      <label class="l">Password</label>
+      <div class="pw"><input class="field" id="rPass" type="password" maxlength="64" placeholder="Minimal 6 karakter"><button type="button" class="eye">👁️</button></div>
+      <label class="l">Ulangi Password</label>
+      <div class="pw"><input class="field" id="rPass2" type="password" maxlength="64" placeholder="Ketik password lagi"><button type="button" class="eye">👁️</button></div>
+      <label class="l">Umur</label>
+      <select class="field" id="rAge"><option value="">Pilih umur</option></select>
+      <div class="err" id="errReg"></div>
+      <button class="btn full" type="submit">Daftar &amp; Masuk</button>
+      <p class="note">Gender dan umur akan terlihat oleh anggota lain di chat.</p>
+    </form>
+
+    <form id="fLog" hidden>
+      <label class="l">Username</label>
+      <input class="field" id="lUser" maxlength="20" autocapitalize="off">
+      <label class="l">Password</label>
+      <div class="pw"><input class="field" id="lPass" type="password" maxlength="64"><button type="button" class="eye">👁️</button></div>
+      <div class="err" id="errLog"></div>
+      <button class="btn full" type="submit">Masuk</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== APLIKASI ===== -->
+<div id="app" hidden>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="logo">💬</div><span>Chat Global</span></div>
+    <nav class="menu" id="menu"></nav>
+    <div class="side-foot"><span class="dot"></span><span id="who">-</span></div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+
+  <section class="main">
+    <header class="topbar">
+      <button class="burger" id="burger">☰</button>
+      <h1 id="title">Chat Global</h1>
+      <div class="status"><span class="dot off" id="sdot"></span><span id="stext">Menghubungkan...</span></div>
+    </header>
+    <div class="view" id="view"></div>
+  </section>
+</div>
+
+<script type="module">
+/* ================= UTIL ================= */
+const $ = s => document.querySelector(s);
+const ls = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtTime = t => {
+  const d = new Date(t), n = new Date();
+  const hm = d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  return d.toDateString()===n.toDateString() ? hm : d.toLocaleDateString('id-ID',{day:'2-digit',month:'short'})+' '+hm;
+};
+const empty = (i,t) => `<div class="empty"><div class="big">${i}</div>${t}</div>`;
+const gIcon = g => g==='Perempuan' ? '<b class="gf">♀</b>' : '<b class="gm">♂</b>';
+function toast(t){
+  const d = document.createElement('div'); d.className='toast'; d.textContent=t;
+  document.body.appendChild(d); setTimeout(()=>d.remove(),2800);
+}
+function beep(){
+  if(ls.get('cg_sound')==='0') return;
+  try{
+    const c = new (window.AudioContext||window.webkitAudioContext)();
+    const o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination); o.frequency.value=880; g.gain.value=.05;
+    o.start(); o.stop(c.currentTime+.12); setTimeout(()=>c.close(),400);
+  }catch(e){}
+}
+function showSetup(title, msg){
+  document.body.innerHTML = `<div style="padding:28px;font-family:system-ui,sans-serif;max-width:520px;margin:auto;line-height:1.55"><h2>${title}</h2><p style="margin-top:8px;color:#555">${msg}</p></div>`;
+  document.body.style.overflow = 'auto';
+}
+
+/* ================= FIREBASE ================= */
+const FB = 'https://www.gstatic.com/firebasejs/10.14.1/';
+let cfg = null;
+try { cfg = (await import('./config.js')).default; } catch(e) {}
+const bad = v => !v || String(v).includes('ISI_');
+if(!cfg || bad(cfg.apiKey) || bad(cfg.databaseURL)){
+  showSetup('Firebase belum diatur','Isi file <b>config.js</b> dengan konfigurasi proyek Firebase kamu (apiKey, databaseURL, dan lainnya), lalu muat ulang halaman.');
+  throw new Error('config belum diisi');
+}
+let A, D, auth, db;
+try{
+  const [app_, au, dbm] = await Promise.all([import(FB+'firebase-app.js'), import(FB+'firebase-auth.js'), import(FB+'firebase-database.js')]);
+  A = au; D = dbm;
+  const app = app_.initializeApp(cfg);
+  auth = A.getAuth(app); db = D.getDatabase(app);
+}catch(e){
+  showSetup('Gagal memuat Firebase','Cek koneksi internet kamu lalu muat ulang halaman.');
+  throw e;
+}
+const { ref, set, get, push, query, limitToLast, onChildAdded, onValue, onDisconnect, remove, serverTimestamp } = D;
+
+const emailOf = n => n.toLowerCase() + '@chatglobal.app';
+const fbMsg = e => ({
+  'auth/email-already-in-use':'Username sudah dipakai.',
+  'auth/invalid-credential':'Username atau password salah.',
+  'auth/invalid-login-credentials':'Username atau password salah.',
+  'auth/user-not-found':'Username atau password salah.',
+  'auth/wrong-password':'Username atau password salah.',
+  'auth/weak-password':'Password terlalu lemah (minimal 6 karakter).',
+  'auth/too-many-requests':'Terlalu banyak percobaan, coba lagi nanti.',
+  'auth/network-request-failed':'Koneksi internet bermasalah.',
+  'auth/invalid-email':'Username tidak valid.',
+  'auth/operation-not-allowed':'Login Email/Password belum diaktifkan di Firebase (Authentication > Sign-in method).',
+  'PERMISSION_DENIED':'Ditolak oleh aturan database. Pastikan database.rules.json sudah di-deploy.'
+}[e && e.code] || (e && e.message && e.message.includes('PERMISSION_DENIED') ? 'Ditolak oleh aturan database. Pastikan database.rules.json sudah di-deploy.' : 'Terjadi kesalahan: ' + ((e && (e.code||e.message)) || 'tidak diketahui')));
+
+let me = null, current = 'chat', unread = 0, pendingText = '', entered = false, busy = false, ready = false;
+const state = { msgs:[], online:[], favs:[] };
+let typingNames = [];
+const view = $('#view');
+
+/* ================= DAFTAR / MASUK ================= */
+for(let a=13; a<=70; a++){ const o=document.createElement('option'); o.value=a; o.textContent=a+' tahun'; $('#rAge').appendChild(o); }
+
+let gender = '';
+document.querySelectorAll('#seg button').forEach(b => b.onclick = () => {
+  gender = b.dataset.g;
+  document.querySelectorAll('#seg button').forEach(x => x.classList.toggle('on', x===b));
+});
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x===b));
+  $('#fReg').hidden = b.dataset.tab!=='reg';
+  $('#fLog').hidden = b.dataset.tab!=='log';
+});
+document.querySelectorAll('.eye').forEach(b => b.onclick = () => {
+  const i = b.previousElementSibling; i.type = i.type==='password' ? 'text' : 'password';
+});
+
+$('#fReg').onsubmit = async e => {
+  e.preventDefault();
+  const err = $('#errReg'); err.textContent = '';
+  const name = $('#rUser').value.trim(), p1 = $('#rPass').value, p2 = $('#rPass2').value, age = parseInt($('#rAge').value,10);
+  if(!gender) return err.textContent = 'Pilih gender dulu.';
+  if(!/^[A-Za-z0-9_]{3,20}$/.test(name)) return err.textContent = 'Username 3-20 karakter: huruf, angka, atau _';
+  if(p1.length < 6) return err.textContent = 'Password minimal 6 karakter.';
+  if(p1 !== p2) return err.textContent = 'Ulangi password tidak sama.';
+  if(!age) return err.textContent = 'Pilih umur kamu.';
+  const btn = e.submitter; if(btn) btn.disabled = true;
+  busy = true;
+  try{
+    const cred = await A.createUserWithEmailAndPassword(auth, emailOf(name), p1);
+    const profile = { username:name, gender, age };
+    try{ await set(ref(db,'users/'+cred.user.uid), profile); }
+    catch(ex){ try{ await A.deleteUser(cred.user); }catch(_){} throw ex; }
+    me = { uid:cred.user.uid, ...profile };
+    enterApp();
+  }catch(ex){ err.textContent = fbMsg(ex); }
+  busy = false; if(btn) btn.disabled = false;
+};
+
+$('#fLog').onsubmit = async e => {
+  e.preventDefault();
+  const err = $('#errLog'); err.textContent = '';
+  const name = $('#lUser').value.trim(), pass = $('#lPass').value;
+  if(!name || !pass) return err.textContent = 'Isi username dan password.';
+  const btn = e.submitter; if(btn) btn.disabled = true;
+  busy = true;
+  try{
+    const cred = await A.signInWithEmailAndPassword(auth, emailOf(name), pass);
+    const s = await get(ref(db,'users/'+cred.user.uid));
+    if(!s.exists()){ await A.signOut(auth); throw { message:'Profil akun tidak ditemukan.' }; }
+    me = { uid:cred.user.uid, ...s.val() };
+    enterApp();
+  }catch(ex){ err.textContent = fbMsg(ex); }
+  busy = false; if(btn) btn.disabled = false;
+};
+
+A.onAuthStateChanged(auth, async u => {
+  if(busy) return;
+  if(!u){ if(entered) location.reload(); else $('#auth').hidden = false; return; }
+  if(entered) return;
+  try{
+    const s = await get(ref(db,'users/'+u.uid));
+    if(s.exists()){ me = { uid:u.uid, ...s.val() }; enterApp(); }
+    else { await A.signOut(auth); $('#auth').hidden = false; }
+  }catch(e){ $('#auth').hidden = false; }
+});
+
+function logout(){
+  const done = () => location.reload();
+  const tasks = [];
+  try{ tasks.push(remove(ref(db,'presence/'+me.uid)), remove(ref(db,'typing/'+me.uid))); }catch(e){}
+  Promise.allSettled(tasks).finally(() => A.signOut(auth).catch(()=>{}).finally(done));
+}
+
+/* ================= MENU ================= */
+const MENUS = [
+  {id:'chat',    ic:'💬', t:'Chat Global'},
+  {id:'online',  ic:'🟢', t:'Anggota Online'},
+  {id:'fav',     ic:'⭐', t:'Favorit'},
+  {id:'upload',  ic:'📤', t:'Upload File'},
+  {id:'search',  ic:'🔍', t:'Pencarian'},
+  {id:'prompts', ic:'✨', t:'Template Pesan'},
+  {id:'emoji',   ic:'😀', t:'Emoji'},
+  {id:'profile', ic:'👤', t:'Profil'},
+  {id:'settings',ic:'⚙️', t:'Pengaturan'},
+  {id:'rules',   ic:'📜', t:'Aturan Chat'},
+  {id:'help',    ic:'❓', t:'Bantuan'},
+  {id:'logout',  ic:'🚪', t:'Keluar'}
+];
+function buildMenu(){
+  const m = $('#menu'); m.innerHTML = '';
+  MENUS.forEach((x,i)=>{
+    const d = document.createElement('div');
+    d.className='item'; d.dataset.id=x.id; d.style.animationDelay=(i*60)+'ms';
+    d.innerHTML = `<span class="ic">${x.ic}</span><span>${x.t}</span><span class="badge" id="b-${x.id}"></span>`;
+    d.onclick = () => x.id==='logout' ? logout() : go(x.id);
+    m.appendChild(d);
+  });
+}
+function badges(){
+  const set_ = (id,n) => { const b=$('#b-'+id); if(!b) return; b.textContent=n; b.classList.toggle('show',n>0); };
+  set_('chat', unread);
+  set_('online', state.online.length);
+  set_('fav', state.favs.length);
+}
+function go(id){
+  current = id;
+  if(id==='chat'){ unread = 0; badges(); }
+  document.querySelectorAll('.item').forEach(e => e.classList.toggle('active', e.dataset.id===id));
+  $('#title').textContent = MENUS.find(m=>m.id===id).t;
+  document.body.classList.remove('open');
+  render();
+}
+function render(){
+  view.classList.toggle('chatmode', current==='chat');
+  view.style.animation='none'; void view.offsetWidth; view.style.animation='';
+  V[current]();
+}
+
+/* ================= MASUK APLIKASI ================= */
+function enterApp(){
+  if(entered) return;
+  entered = true;
+  $('#auth').hidden = true; $('#app').hidden = false;
+  try{ state.favs = JSON.parse(ls.get('cg_fav_'+me.uid)||'[]'); }catch(e){ state.favs = []; }
+  $('#who').textContent = me.username;
+  buildMenu();
+  connect();
+  go('chat');
+}
+
+function setStatus(ok){
+  $('#sdot').classList.toggle('off', !ok);
+  $('#stext').textContent = ok ? 'Terhubung' : 'Menghubungkan...';
+}
+
+function connect(){
+  const myPres = ref(db,'presence/'+me.uid), myTyp = ref(db,'typing/'+me.uid);
+
+  onValue(ref(db,'.info/connected'), snap => {
+    const ok = snap.val() === true; setStatus(ok);
+    if(ok){
+      Promise.all([onDisconnect(myPres).remove(), onDisconnect(myTyp).remove()])
+        .then(() => set(myPres, { username:me.username, gender:me.gender, age:me.age }))
+        .catch(()=>{});
+    }
+  });
+
+  onValue(ref(db,'presence'), s => {
+    const v = s.val() || {};
+    state.online = Object.entries(v).map(([uid,x]) => ({ id:uid, ...x }));
+    badges(); if(current==='online') render();
+  });
+
+  onValue(ref(db,'typing'), s => {
+    const v = s.val() || {};
+    typingNames = Object.entries(v).filter(([uid]) => uid !== me.uid).map(([,x]) => x.username);
+    drawTyping();
+  });
+
+  const q = query(ref(db,'messages'), limitToLast(100));
+  onChildAdded(q, snap => {
+    const m = { id:snap.key, ...snap.val() };
+    if(state.msgs.some(x => x.id === m.id)) return;
+    state.msgs.push(m);
+    if(state.msgs.length > 300) state.msgs.shift();
+    if(ready && m.uid !== me.uid){
+      beep();
+      if(current !== 'chat'){ unread++; badges(); }
+    }
+    if(current === 'chat') scheduleDraw(m.uid === me.uid);
+  });
+  onValue(q, () => { ready = true; if(current==='chat') scheduleDraw(true); }, { onlyOnce:true });
+}
+
+/* ================= CHAT ================= */
+let iType = false, tTimer = null, drawQueued = false, forceScroll = false, lastSend = 0;
+function setTyping(on){
+  const r = ref(db,'typing/'+me.uid);
+  (on ? set(r, { username:me.username }) : remove(r)).catch(()=>{});
+}
+function stopTyping(){ clearTimeout(tTimer); if(iType){ iType = false; setTyping(false); } }
+
+function scheduleDraw(force){
+  forceScroll = forceScroll || !!force;
+  if(drawQueued) return;
+  drawQueued = true;
+  requestAnimationFrame(() => { drawQueued = false; drawMsgs(forceScroll); forceScroll = false; });
+}
+function msgHTML(m){
+  const mine = m.uid === me.uid;
+  const who = mine ? '' : `<div class="who">${gIcon(m.gender)} ${esc(m.username)} · ${esc(m.age)} th</div>`;
+  const fav = state.favs.some(f => f.id === m.id);
+  return `<div class="msg ${mine?'me':'ot'}">${who}<div>${esc(m.text)}</div><small>${m.time ? fmtTime(m.time) : ''}</small><button class="star" data-id="${esc(m.id)}">${fav?'⭐':'☆'}</button></div>`;
+}
+function drawMsgs(force){
+  const box = $('#msgs'); if(!box) return;
+  const near = box.scrollHeight - box.scrollTop - box.clientHeight < 140;
+  box.innerHTML = state.msgs.length ? state.msgs.map(msgHTML).join('') : empty('💬','Belum ada pesan.<br>Jadi yang pertama menyapa!');
+  if(force || near) box.scrollTop = box.scrollHeight;
+}
+function drawTyping(){
+  const el = $('#typing'); if(!el) return;
+  const names = typingNames;
+  if(!names.length){ el.innerHTML = ''; return; }
+  const txt = names.length===1 ? names[0] : names.length===2 ? names[0]+' dan '+names[1] : names[0]+', '+names[1]+' dan '+(names.length-2)+' lainnya';
+  el.innerHTML = `<span class="dots"><i></i><i></i><i></i></span><span>${esc(txt)} sedang mengetik...</span>`;
+  const box = $('#msgs'); if(box && box.scrollHeight-box.scrollTop-box.clientHeight < 160) box.scrollTop = box.scrollHeight;
+}
+function toggleFav(id){
+  const i = state.favs.findIndex(f => f.id === id);
+  if(i >= 0) state.favs.splice(i,1);
+  else{
+    const m = state.msgs.find(x => x.id === id); if(!m) return;
+    state.favs.push({ id:m.id, username:m.username, text:m.text, time:m.time });
+  }
+  ls.set('cg_fav_'+me.uid, JSON.stringify(state.favs));
+  badges();
+  current==='chat' ? drawMsgs() : render();
+}
+
+/* ================= VIEWS ================= */
+const V = {};
+
+V.chat = () => {
+  view.innerHTML = `<div class="chat-wrap">
+    <div class="msgs" id="msgs"></div>
+    <div class="typing" id="typing"></div>
+    <div class="composer">
+      <input type="text" id="inp" placeholder="Tulis pesan untuk semua..." autocomplete="off" maxlength="1000">
+      <button class="btn" id="send">Kirim</button>
+    </div></div>`;
+  const inp = $('#inp');
+  const send = async () => {
+    const v = inp.value.trim();
+    const now = Date.now();
+    if(!v || now - lastSend < 300) return;
+    lastSend = now;
+    inp.value = ''; stopTyping();
+    try{
+      await push(ref(db,'messages'), { uid:me.uid, username:me.username, gender:me.gender, age:me.age, text:v, time:serverTimestamp() });
+    }catch(e){ toast('Pesan gagal terkirim'); inp.value = v; }
+  };
+  $('#send').onclick = send;
+  inp.onkeydown = e => { if(e.key==='Enter') send(); };
+  inp.oninput = () => {
+    if(!inp.value.trim()){ stopTyping(); return; }
+    if(!iType){ iType = true; setTyping(true); }
+    clearTimeout(tTimer); tTimer = setTimeout(stopTyping, 2500);
+  };
+  $('#msgs').onclick = e => { const b = e.target.closest('.star'); if(b) toggleFav(b.dataset.id); };
+  if(pendingText){ inp.value = pendingText; pendingText = ''; }
+  drawMsgs(true); drawTyping();
+  if(window.matchMedia('(min-width:761px)').matches) inp.focus();
+};
+
+V.online = () => {
+  const l = state.online;
+  view.innerHTML = `<h2 style="margin-top:0">${l.length} anggota online</h2><div class="list">` +
+    l.map(u=>`<div class="card"><div class="av ${u.gender==='Perempuan'?'f':'m'}">${esc(u.username[0].toUpperCase())}</div>
+      <div class="info"><b>${esc(u.username)}${u.id===me.uid?' (kamu)':''}</b><span>${esc(u.gender)} • ${esc(u.age)} tahun</span></div><span class="dot"></span></div>`).join('') + '</div>';
+};
+
+V.fav = () => {
+  view.innerHTML = state.favs.length
+    ? `<div class="list">${state.favs.map(f=>`<div class="card"><div class="info"><b>⭐ ${esc(f.username)}</b><span style="white-space:normal">${esc(f.text)} • ${f.time?fmtTime(f.time):''}</span></div><button class="btn ghost" data-del="${esc(f.id)}">✖</button></div>`).join('')}</div>`
+    : empty('⭐','Belum ada favorit.<br>Ketuk ikon bintang di pesan chat.');
+  view.querySelectorAll('[data-del]').forEach(b => b.onclick = () => toggleFav(b.dataset.del));
+};
+
+V.upload = () => {
+  view.innerHTML = `<div class="lock"><div class="big">🔒</div><h2 style="margin:6px 0">Upload file belum aktif</h2>
+    <p>Aplikasi ini memakai paket Firebase <b>Spark</b> (gratis). Di paket itu penyimpanan file (Cloud Storage) tidak tersedia, jadi fitur upload dimatikan.</p>
+    <p style="margin-top:8px">Untuk mengaktifkannya, proyek harus pindah ke paket Blaze lalu fitur upload ditambahkan.</p></div>`;
+};
+
+V.search = () => {
+  view.innerHTML = `<input class="search field" id="q" placeholder="Cari pesan atau anggota online..."><div id="res"></div>`;
+  $('#q').oninput = e => {
+    const q = e.target.value.toLowerCase().trim();
+    if(!q){ $('#res').innerHTML = ''; return; }
+    const m = state.msgs.filter(x => (x.text||'').toLowerCase().includes(q) || (x.username||'').toLowerCase().includes(q)).slice(-30);
+    const u = state.online.filter(x => x.username.toLowerCase().includes(q));
+    $('#res').innerHTML = (m.length||u.length)
+      ? (m.length ? '<h2>Pesan</h2><div class="list">'+m.map(x=>`<div class="card"><div class="info"><b>${esc(x.username)}</b><span style="white-space:normal">${esc(x.text)} • ${x.time?fmtTime(x.time):''}</span></div></div>`).join('')+'</div>' : '') +
+        (u.length ? '<h2>Anggota online</h2><div class="list">'+u.map(x=>`<div class="card"><div class="av ${x.gender==='Perempuan'?'f':'m'}">${esc(x.username[0].toUpperCase())}</div><div class="info"><b>${esc(x.username)}</b><span>${esc(x.gender)} • ${esc(x.age)} tahun</span></div></div>`).join('')+'</div>' : '')
+      : empty('🔍','Tidak ditemukan');
+  };
+};
+
+V.prompts = () => {
+  const P = ['Halo semuanya! 👋','Ada yang online?','Selamat pagi semua ☀️','Selamat malam semua 🌙','Terima kasih ya 🙏','Ada yang mau ngobrol bareng?'];
+  view.innerHTML = `<div class="list">${P.map(p=>`<div class="card" style="cursor:pointer" data-p="${esc(p)}"><div style="font-size:22px">✨</div><div class="info"><b>${esc(p)}</b><span>Ketuk untuk dipakai di chat</span></div></div>`).join('')}</div>`;
+  view.querySelectorAll('[data-p]').forEach(c => c.onclick = () => { pendingText = c.dataset.p; go('chat'); });
+};
+
+V.emoji = () => {
+  const E = ['😀','😂','🤣','😍','😎','🥰','😭','😡','👍','🙏','🔥','🎉','❤️','💯','🤔','😴','🙌','👋','😅','🥳','😇','🤝','✨','💬'];
+  view.innerHTML = `<p style="color:var(--muted);font-size:13px;margin-bottom:10px">Ketuk emoji untuk menambahkannya ke kolom chat.</p><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(56px,1fr))">${E.map(e=>`<button class="btn ghost" style="font-size:24px;padding:10px" data-e="${e}">${e}</button>`).join('')}</div>`;
+  view.querySelectorAll('[data-e]').forEach(b => b.onclick = () => { pendingText += b.dataset.e; toast('Ditambahkan, buka Chat Global'); });
+};
+
+V.profile = () => {
+  view.innerHTML = `<div class="profile"><div class="av big ${me.gender==='Perempuan'?'f':'m'}">${esc(me.username[0].toUpperCase())}</div>
+    <h2 style="margin:0">${esc(me.username)}</h2>
+    <div class="row"><span>Gender</span><b>${esc(me.gender)}</b></div>
+    <div class="row"><span>Umur</span><b>${esc(me.age)} tahun</b></div>
+    <div class="row"><span>Pesan di layar</span><b>${state.msgs.filter(m=>m.uid===me.uid).length}</b></div></div>`;
+};
+
+V.settings = () => {
+  view.innerHTML = `<div class="row"><span>Bunyi saat ada pesan baru</span><input type="checkbox" id="snd" ${ls.get('cg_sound')==='0'?'':'checked'} style="width:20px;height:20px"></div>
+    <div class="row"><span>Hapus semua favorit</span><button class="btn ghost" id="cf">Hapus</button></div>
+    <div class="row"><span>Keluar dari akun</span><button class="btn danger" id="lo">Keluar</button></div>`;
+  $('#snd').onchange = e => ls.set('cg_sound', e.target.checked ? '1' : '0');
+  $('#cf').onclick = () => { state.favs = []; ls.set('cg_fav_'+me.uid,'[]'); badges(); toast('Favorit dihapus'); };
+  $('#lo').onclick = logout;
+};
+
+V.rules = () => {
+  const R = ['Bersikap sopan dan saling menghormati.','Dilarang spam, penipuan, dan kata kasar.','Jangan membagikan data pribadi (alamat, nomor HP, password).','Gender dan umur kamu terlihat oleh anggota lain.','Pesan yang sudah terkirim tidak bisa diubah atau dihapus oleh pengguna.'];
+  view.innerHTML = `<div class="list">${R.map((r,i)=>`<div class="card"><div class="av m" style="width:32px;height:32px;font-size:14px">${i+1}</div><div class="info"><b style="white-space:normal">${esc(r)}</b></div></div>`).join('')}</div>`;
+};
+
+V.help = () => {
+  const H = [
+    ['Siapa yang bisa melihat chat?','Semua anggota yang sudah terdaftar. Gender dan umur kamu ikut terlihat.'],
+    ['Apa arti animasi tiga titik?','Itu tanda ada anggota lain yang sedang mengetik.'],
+    ['Cara menyimpan pesan?','Ketuk bintang di pojok pesan, lalu lihat di menu Favorit. Favorit tersimpan di browser ini saja.'],
+    ['Kenapa upload file terkunci?','Aplikasi memakai paket gratis Firebase yang tidak menyediakan penyimpanan file.'],
+    ['Lupa password?','Belum ada fitur pemulihan karena akun memakai username saja. Hubungi pemilik aplikasi.']
+  ];
+  view.innerHTML = H.map(h=>`<details><summary>${h[0]}</summary><p>${h[1]}</p></details>`).join('');
+};
+
+/* ================= EVENT UMUM ================= */
+$('#burger').onclick = () => document.body.classList.toggle('open');
+$('#overlay').onclick = () => document.body.classList.remove('open');
+if('serviceWorker' in navigator){ try{ navigator.serviceWorker.register('/sw.js'); }catch(e){} }
+</script>
+</body>
+</html>
