@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#3b82f6">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icon-192.png">
-<title>Chat Global</title>
+<title>Service Request</title>
 <style>
   :root{
     --bg:#ffffff; --side:#eceef1; --side-hover:#dde0e5; --side-active:#ffffff;
@@ -153,58 +153,43 @@
     .burger{display:block}
     .msg{max-width:90%}
   }
-  .lock{text-align:center;max-width:420px;margin:40px auto;color:#374151;font-size:14px;line-height:1.55}
-  .lock .big{font-size:48px}
-  .av{background-size:cover;background-position:center}
-  .av.sm{width:22px;height:22px;font-size:11px}
-  .who{display:flex;align-items:center;gap:6px}
-  .imgbox{max-width:100%;min-height:40px;background:#d9dde3;border-radius:10px;overflow:hidden;cursor:zoom-in;margin-bottom:4px}
-  .imgbox.ok{background:none}
-  .imgbox img{width:100%;height:100%;object-fit:cover;display:block}
-  .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);display:grid;place-items:center;z-index:200;cursor:zoom-out}
-  .lightbox img{max-width:96vw;max-height:92vh;object-fit:contain}
+  .hero{text-align:center;max-width:440px;margin:70px auto 0;color:#374151}
+  .hero .big{font-size:56px}
+  .hero h2{font-size:21px;margin:10px 0 6px;color:var(--text)}
+  .hero p{color:var(--muted);font-size:15px;line-height:1.55}
+  .hero .dots{display:inline-flex}
+  .chip{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--side);color:#4b5563}
+  .chip.ok{background:#dcfce7;color:#166534}
+  .chip.no{background:#fee2e2;color:#991b1b}
+  .btn.ok{background:#16a34a}
+  .req-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+  .req-actions .btn{padding:7px 12px;font-size:13px}
+  .dot.gray{background:#c5c9cf}
+  .av.adm{background:#1f2937}
+  .msg.ai{align-self:flex-start;background:#eef4ff;border:1px solid #cfe0ff;border-bottom-left-radius:4px}
+  .who .chip{margin-left:6px}
+  .aibar{display:flex;align-items:center;gap:10px;padding:2px 2px 8px;min-height:36px}
+  .aibtn{border:1px solid #cfe0ff;background:#eef4ff;color:#1d4ed8;border-radius:20px;padding:6px 14px;font-size:13.5px;cursor:pointer;font-weight:600;transition:all .2s}
+  .aibtn.on{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.2)}
+  .aibar .hint{font-size:12px;color:var(--muted)}
+  #who{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
 
-<!-- ===== LAYAR DAFTAR / MASUK ===== -->
+<!-- ===== LOGIN (REQUEST) ===== -->
 <div class="auth" id="auth" hidden>
   <div class="auth-card">
-    <div class="auth-logo">💬</div>
-    <h1>Chat Global</h1>
-    <p class="sub">Ngobrol bareng semua orang, realtime</p>
-
-    <div class="tabs">
-      <button class="on" data-tab="reg">Daftar</button>
-      <button data-tab="log">Masuk</button>
-    </div>
-
-    <form id="fReg" autocomplete="off">
-      <label class="l">Gender</label>
-      <div class="seg" id="seg">
-        <button type="button" data-g="Laki-laki">♂ Laki-laki</button>
-        <button type="button" data-g="Perempuan">♀ Perempuan</button>
-      </div>
+    <div class="auth-logo">🛎️</div>
+    <h1>Service Request</h1>
+    <p class="sub">Masukkan username untuk mengirim request</p>
+    <form id="fReq" autocomplete="off" style="margin-top:20px">
       <label class="l">Username</label>
-      <input class="field" id="rUser" maxlength="20" placeholder="3-20 karakter (huruf, angka, _)" autocapitalize="off">
-      <label class="l">Password</label>
-      <div class="pw"><input class="field" id="rPass" type="password" maxlength="64" placeholder="Minimal 6 karakter"><button type="button" class="eye">👁️</button></div>
-      <label class="l">Ulangi Password</label>
-      <div class="pw"><input class="field" id="rPass2" type="password" maxlength="64" placeholder="Ketik password lagi"><button type="button" class="eye">👁️</button></div>
-      <label class="l">Umur</label>
-      <select class="field" id="rAge"><option value="">Pilih umur</option></select>
-      <div class="err" id="errReg"></div>
-      <button class="btn full" type="submit">Daftar &amp; Masuk</button>
-      <p class="note">Gender dan umur akan terlihat oleh anggota lain di chat.</p>
-    </form>
-
-    <form id="fLog" hidden>
-      <label class="l">Username</label>
-      <input class="field" id="lUser" maxlength="20" autocapitalize="off">
-      <label class="l">Password</label>
-      <div class="pw"><input class="field" id="lPass" type="password" maxlength="64"><button type="button" class="eye">👁️</button></div>
-      <div class="err" id="errLog"></div>
-      <button class="btn full" type="submit">Masuk</button>
+      <input class="field" id="uName" maxlength="20" placeholder="3-20 karakter (huruf, angka, _)" autocapitalize="off">
+      <label class="l">Kode Admin <span style="opacity:.7">(opsional)</span></label>
+      <div class="pw"><input class="field" id="uCode" type="password" maxlength="64" placeholder="Kosongkan jika pengguna biasa"><button type="button" class="eye">👁️</button></div>
+      <div class="err" id="errReq"></div>
+      <button class="btn full" type="submit">Request</button>
     </form>
   </div>
 </div>
@@ -212,16 +197,16 @@
 <!-- ===== APLIKASI ===== -->
 <div id="app" hidden>
   <aside class="sidebar" id="sidebar">
-    <div class="brand"><div class="logo">💬</div><span>Chat Global</span></div>
+    <div class="brand"><div class="logo">🛎️</div><span>Service Request</span></div>
     <nav class="menu" id="menu"></nav>
-    <div class="side-foot"><span class="dot"></span><span id="who">-</span></div>
+    <div class="side-foot"><span class="dot"></span><span id="who">-</span><button class="btn ghost" id="logout" type="button" style="margin-left:auto;padding:5px 10px;font-size:12px">Keluar</button></div>
   </aside>
   <div class="overlay" id="overlay"></div>
 
   <section class="main">
     <header class="topbar">
       <button class="burger" id="burger">☰</button>
-      <h1 id="title">Chat Global</h1>
+      <h1 id="title">Dashboard</h1>
       <div class="status"><span class="dot off" id="sdot"></span><span id="stext">Menghubungkan...</span></div>
     </header>
     <div class="view" id="view"></div>
@@ -237,30 +222,41 @@ const ls = {
   del(k){ try{ localStorage.removeItem(k); }catch(e){} }
 };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtText = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
 const fmtTime = t => {
+  if(!t) return '';
   const d = new Date(t), n = new Date();
   const hm = d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
   return d.toDateString()===n.toDateString() ? hm : d.toLocaleDateString('id-ID',{day:'2-digit',month:'short'})+' '+hm;
 };
 const empty = (i,t) => `<div class="empty"><div class="big">${i}</div>${t}</div>`;
-const gIcon = g => g==='Perempuan' ? '<b class="gf">♀</b>' : '<b class="gm">♂</b>';
 function toast(t){
   const d = document.createElement('div'); d.className='toast'; d.textContent=t;
-  document.body.appendChild(d); setTimeout(()=>d.remove(),2800);
-}
-function beep(){
-  if(ls.get('cg_sound')==='0') return;
-  try{
-    const c = new (window.AudioContext||window.webkitAudioContext)();
-    const o = c.createOscillator(), g = c.createGain();
-    o.connect(g); g.connect(c.destination); o.frequency.value=880; g.gain.value=.05;
-    o.start(); o.stop(c.currentTime+.12); setTimeout(()=>c.close(),400);
-  }catch(e){}
+  document.body.appendChild(d); setTimeout(()=>d.remove(),3200);
 }
 function showSetup(title, msg){
   document.body.innerHTML = `<div style="padding:28px;font-family:system-ui,sans-serif;max-width:520px;margin:auto;line-height:1.55"><h2>${title}</h2><p style="margin-top:8px;color:#555">${msg}</p></div>`;
   document.body.style.overflow = 'auto';
 }
+
+/* ---- suara klik saat interaksi (diatur di menu Setting) ---- */
+let actx = null;
+function clickSound(){
+  if(ls.get('sr_click') === '0') return;
+  try{
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if(actx.state === 'suspended') actx.resume();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'square'; o.frequency.value = 900; g.gain.value = .03;
+    o.connect(g); g.connect(actx.destination);
+    const t = actx.currentTime;
+    g.gain.exponentialRampToValueAtTime(0.0001, t + .05);
+    o.start(t); o.stop(t + .06);
+  }catch(e){}
+}
+document.addEventListener('pointerdown', e => {
+  if(e.target.closest && e.target.closest('button,.item,summary,input[type=checkbox],.aibtn')) clickSound();
+}, true);
 
 /* ================= FIREBASE ================= */
 const FB = 'https://www.gstatic.com/firebasejs/10.14.1/';
@@ -268,7 +264,7 @@ let cfg = null;
 try { cfg = (await import('./config.js')).default; } catch(e) {}
 const bad = v => !v || String(v).includes('ISI_');
 if(!cfg || bad(cfg.apiKey) || bad(cfg.databaseURL)){
-  showSetup('Firebase belum diatur','Isi file <b>config.js</b> dengan konfigurasi proyek Firebase kamu (apiKey, databaseURL, dan lainnya), lalu muat ulang halaman.');
+  showSetup('Firebase belum diatur','Isi file <b>config.js</b> dengan konfigurasi proyek Firebase kamu, lalu muat ulang halaman.');
   throw new Error('config belum diisi');
 }
 let A, D, auth, db;
@@ -281,186 +277,66 @@ try{
   showSetup('Gagal memuat Firebase','Cek koneksi internet kamu lalu muat ulang halaman.');
   throw e;
 }
-const { ref, set, get, push, query, limitToLast, onChildAdded, onValue, onDisconnect, remove, serverTimestamp } = D;
+const { ref, set, get, update, remove, push, query, orderByChild, limitToLast, onValue, onChildAdded, onDisconnect, serverTimestamp } = D;
 
-const emailOf = n => n.toLowerCase() + '@chatglobal.app';
-const fbMsg = e => ({
-  'auth/email-already-in-use':'Username sudah dipakai.',
-  'auth/invalid-credential':'Username atau password salah.',
-  'auth/invalid-login-credentials':'Username atau password salah.',
-  'auth/user-not-found':'Username atau password salah.',
-  'auth/wrong-password':'Username atau password salah.',
-  'auth/weak-password':'Password terlalu lemah (minimal 6 karakter).',
-  'auth/too-many-requests':'Terlalu banyak percobaan, coba lagi nanti.',
-  'auth/network-request-failed':'Koneksi internet bermasalah.',
-  'auth/invalid-email':'Username tidak valid.',
-  'auth/operation-not-allowed':'Login Email/Password belum diaktifkan di Firebase (Authentication > Sign-in method).',
-  'PERMISSION_DENIED':'Ditolak oleh aturan database. Pastikan database.rules.json sudah di-deploy.'
-}[e && e.code] || (e && e.message && e.message.includes('PERMISSION_DENIED') ? 'Ditolak oleh aturan database. Pastikan database.rules.json sudah di-deploy.' : 'Terjadi kesalahan: ' + ((e && (e.code||e.message)) || 'tidak diketahui')));
+const fbMsg = e => {
+  const c = e && e.code, m = String((e && e.message) || '');
+  if(c === 'auth/operation-not-allowed' || c === 'auth/admin-restricted-operation')
+    return 'Login Anonymous belum diaktifkan di Firebase (Authentication > Sign-in method > Anonymous).';
+  if(c === 'auth/network-request-failed') return 'Koneksi internet bermasalah.';
+  if(c === 'auth/too-many-requests') return 'Terlalu banyak percobaan, coba lagi nanti.';
+  if(c === 'PERMISSION_DENIED' || m.includes('PERMISSION_DENIED')) return 'Ditolak oleh aturan database. Pastikan Rules terbaru sudah di-Publish.';
+  return 'Terjadi kesalahan: ' + (c || m || 'tidak diketahui');
+};
 
-let me = null, current = 'chat', unread = 0, pendingText = '', entered = false, busy = false, ready = false;
-const state = { msgs:[], online:[], favs:[] };
-let typingNames = [];
+let me = null, current = 'dash', unread = 0, entered = false, busy = false, ready = false, chatStarted = false;
+let myReq = null, aiMode = false, sendingChat = false;
+const state = { online:[], requests:[], msgs:[], aiBusy:[] };
 const view = $('#view');
 
-/* ================= GAMBAR & AVATAR ================= */
-const okData = s => typeof s === 'string' && s.length < 130000 && /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s);
-const imgCache = new Map(), imgLoading = new Set(), avCache = new Map(), avLoading = new Set();
-
-function readImage(file){
-  return new Promise((res, rej) => {
-    const u = URL.createObjectURL(file), im = new Image();
-    im.onload = () => { URL.revokeObjectURL(u); res(im); };
-    im.onerror = () => { URL.revokeObjectURL(u); rej(new Error('Gambar tidak bisa dibaca.')); };
-    im.src = u;
-  });
-}
-async function compress(file, opt){
-  if(!file || !String(file.type).startsWith('image/')) throw new Error('Pilih file berupa gambar.');
-  const im = await readImage(file);
-  let sw = im.naturalWidth, sh = im.naturalHeight, sx = 0, sy = 0;
-  if(opt.square){ const s = Math.min(sw,sh); sx = (sw-s)/2; sy = (sh-s)/2; sw = sh = s; }
-  let scale = Math.min(1, opt.max / Math.max(sw,sh)), q = 0.7;
-  for(let i=0; i<6; i++){
-    const w = Math.max(1, Math.round(sw*scale)), h = Math.max(1, Math.round(sh*scale));
-    const c = document.createElement('canvas'); c.width = w; c.height = h;
-    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0,0,w,h); g.drawImage(im, sx,sy,sw,sh, 0,0,w,h);
-    const data = c.toDataURL('image/jpeg', q);
-    if(data.length <= opt.limit) return { data, w, h };
-    q = Math.max(0.4, q-0.1); scale *= 0.85;
-  }
-  throw new Error('Gambar terlalu besar, coba gambar lain.');
-}
-
-function avHTML(uid, name, gender, size){
-  const d = avCache.get(uid);
-  const st = d ? ` style="background-image:url(${d})"` : '';
-  return `<div class="av ${gender==='Perempuan'?'f':'m'}${size?' '+size:''}" data-av="${esc(uid)}"${st}>${d ? '' : esc((name||'?')[0].toUpperCase())}</div>`;
-}
-function paintAv(uid){
-  const d = avCache.get(uid); if(!d) return;
-  document.querySelectorAll('[data-av="'+CSS.escape(uid)+'"]').forEach(el => { el.style.backgroundImage = 'url('+d+')'; el.textContent = ''; });
-}
-function hydrateAvatars(root){
-  (root || document).querySelectorAll('[data-av]').forEach(el => {
-    const uid = el.dataset.av;
-    if(avCache.has(uid)){ if(avCache.get(uid) && !el.style.backgroundImage) paintAv(uid); return; }
-    if(avLoading.has(uid)) return;
-    avLoading.add(uid);
-    get(ref(db,'avatars/'+uid))
-      .then(s => { const v = s.val(); avCache.set(uid, okData(v) ? v : null); })
-      .catch(() => avCache.set(uid, null))
-      .finally(() => { avLoading.delete(uid); paintAv(uid); });
-  });
-}
-
-const imgObserver = ('IntersectionObserver' in window)
-  ? new IntersectionObserver(es => es.forEach(en => { if(en.isIntersecting){ imgObserver.unobserve(en.target); loadMsgImg(en.target.dataset.img); } }), { rootMargin:'200px' })
-  : null;
-function paintImg(id){
-  const d = imgCache.get(id); if(!d) return;
-  document.querySelectorAll('.imgbox[data-img="'+CSS.escape(id)+'"]').forEach(b => {
-    if(b.querySelector('img')) return;
-    const im = document.createElement('img'); im.src = d; im.alt = ''; b.appendChild(im); b.classList.add('ok');
-  });
-}
-function loadMsgImg(id){
-  if(imgCache.has(id)){ paintImg(id); return; }
-  if(imgLoading.has(id)) return;
-  imgLoading.add(id);
-  get(ref(db,'images/'+id))
-    .then(s => { const v = s.val(); imgCache.set(id, v && okData(v.data) ? v.data : null); })
-    .catch(() => imgCache.set(id, null))
-    .finally(() => { imgLoading.delete(id); paintImg(id); });
-}
-function hydrateImages(){
-  document.querySelectorAll('.imgbox:not(.ok)').forEach(b => {
-    const id = b.dataset.img;
-    if(imgCache.has(id)) paintImg(id);
-    else if(imgObserver) imgObserver.observe(b);
-    else loadMsgImg(id);
-  });
-}
-function lightbox(src){
-  const d = document.createElement('div'); d.className = 'lightbox';
-  const im = document.createElement('img'); im.src = src; im.alt = ''; d.appendChild(im);
-  d.onclick = () => d.remove(); document.body.appendChild(d);
-}
-
-let sendingImg = false;
-async function sendImage(file, caption){
-  if(sendingImg){ toast('Tunggu gambar sebelumnya selesai...'); return false; }
-  sendingImg = true;
+/* ================= AI (lewat Cloudflare Worker, kunci tidak ada di sini) ================= */
+async function askAI(messages){
+  if(bad(cfg.aiUrl)) throw new Error('AI belum diaktifkan. Tambahkan aiUrl di config.js (lihat panduan).');
+  const idToken = await auth.currentUser.getIdToken();
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 40000);
   try{
-    toast('Memproses gambar...');
-    const { data, w, h } = await compress(file, { max:640, limit:90000 });
-    const id = push(ref(db,'images')).key;
-    await set(ref(db,'images/'+id), { uid:me.uid, data });
-    imgCache.set(id, data);
-    const msg = { uid:me.uid, username:me.username, gender:me.gender, age:me.age, img:id, iw:w, ih:h, time:serverTimestamp() };
-    if(caption) msg.text = caption;
-    await push(ref(db,'messages'), msg);
-    return true;
+    const r = await fetch(cfg.aiUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ idToken, messages }), signal:ctl.signal });
+    let d = {}; try{ d = await r.json(); }catch(e){}
+    if(!r.ok) throw new Error(d.error || ('AI error (' + r.status + ')'));
+    return String(d.reply || '').trim() || 'AI tidak memberi jawaban.';
   }catch(e){
-    const m = String((e && e.message) || '');
-    toast(m && !m.includes('PERMISSION') ? m : 'Gambar gagal terkirim. Pastikan Rules terbaru sudah di-Publish.');
-    return false;
-  }finally{ sendingImg = false; }
+    if(e.name === 'AbortError') throw new Error('AI terlalu lama menjawab, coba lagi.');
+    if(e instanceof TypeError) throw new Error('Tidak bisa menghubungi AI. Cek koneksi atau alamat aiUrl.');
+    throw e;
+  }finally{ clearTimeout(timer); }
 }
 
-/* ================= DAFTAR / MASUK ================= */
-for(let a=13; a<=70; a++){ const o=document.createElement('option'); o.value=a; o.textContent=a+' tahun'; $('#rAge').appendChild(o); }
-
-let gender = '';
-document.querySelectorAll('#seg button').forEach(b => b.onclick = () => {
-  gender = b.dataset.g;
-  document.querySelectorAll('#seg button').forEach(x => x.classList.toggle('on', x===b));
-});
-document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
-  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x===b));
-  $('#fReg').hidden = b.dataset.tab!=='reg';
-  $('#fLog').hidden = b.dataset.tab!=='log';
-});
+/* ================= LOGIN (REQUEST) ================= */
 document.querySelectorAll('.eye').forEach(b => b.onclick = () => {
   const i = b.previousElementSibling; i.type = i.type==='password' ? 'text' : 'password';
 });
 
-$('#fReg').onsubmit = async e => {
+$('#fReq').onsubmit = async e => {
   e.preventDefault();
-  const err = $('#errReg'); err.textContent = '';
-  const name = $('#rUser').value.trim(), p1 = $('#rPass').value, p2 = $('#rPass2').value, age = parseInt($('#rAge').value,10);
-  if(!gender) return err.textContent = 'Pilih gender dulu.';
+  const err = $('#errReq'); err.textContent = '';
+  const name = $('#uName').value.trim(), code = $('#uCode').value.trim();
   if(!/^[A-Za-z0-9_]{3,20}$/.test(name)) return err.textContent = 'Username 3-20 karakter: huruf, angka, atau _';
-  if(p1.length < 6) return err.textContent = 'Password minimal 6 karakter.';
-  if(p1 !== p2) return err.textContent = 'Ulangi password tidak sama.';
-  if(!age) return err.textContent = 'Pilih umur kamu.';
   const btn = e.submitter; if(btn) btn.disabled = true;
   busy = true;
   try{
-    const cred = await A.createUserWithEmailAndPassword(auth, emailOf(name), p1);
-    const profile = { username:name, gender, age };
-    try{ await set(ref(db,'users/'+cred.user.uid), profile); }
-    catch(ex){ try{ await A.deleteUser(cred.user); }catch(_){} throw ex; }
-    me = { uid:cred.user.uid, ...profile };
-    enterApp();
-  }catch(ex){ err.textContent = fbMsg(ex); }
-  busy = false; if(btn) btn.disabled = false;
-};
-
-$('#fLog').onsubmit = async e => {
-  e.preventDefault();
-  const err = $('#errLog'); err.textContent = '';
-  const name = $('#lUser').value.trim(), pass = $('#lPass').value;
-  if(!name || !pass) return err.textContent = 'Isi username dan password.';
-  const btn = e.submitter; if(btn) btn.disabled = true;
-  busy = true;
-  try{
-    const cred = await A.signInWithEmailAndPassword(auth, emailOf(name), pass);
-    const s = await get(ref(db,'users/'+cred.user.uid));
-    if(!s.exists()){ await A.signOut(auth); throw { message:'Profil akun tidak ditemukan.' }; }
-    me = { uid:cred.user.uid, ...s.val() };
-    enterApp();
-  }catch(ex){ err.textContent = fbMsg(ex); }
+    if(!auth.currentUser) await A.signInAnonymously(auth);
+    const uid = auth.currentUser.uid;
+    await set(ref(db,'names/'+uid), name);
+    if(code){
+      try{ await set(ref(db,'adminClaims/'+uid), code); }
+      catch(ex){ throw { message:'Kode admin salah.' }; }
+      ls.set('sr_name_'+uid, name);
+      enterApp('admin', name);
+    }else{
+      await set(ref(db,'requests/'+uid), { username:name, status:'pending', time:serverTimestamp() });
+      enterApp('user', name);
+    }
+  }catch(ex){ err.textContent = ex.message && !ex.code ? ex.message : fbMsg(ex); }
   busy = false; if(btn) btn.disabled = false;
 };
 
@@ -469,74 +345,77 @@ A.onAuthStateChanged(auth, async u => {
   if(!u){ if(entered) location.reload(); else $('#auth').hidden = false; return; }
   if(entered) return;
   try{
-    const s = await get(ref(db,'users/'+u.uid));
-    if(s.exists()){ me = { uid:u.uid, ...s.val() }; enterApp(); }
-    else { await A.signOut(auth); $('#auth').hidden = false; }
-  }catch(e){ $('#auth').hidden = false; }
+    const c = await get(ref(db,'adminClaims/'+u.uid));
+    if(c.exists()){ enterApp('admin', ls.get('sr_name_'+u.uid) || 'Admin'); return; }
+    const r = await get(ref(db,'requests/'+u.uid));
+    if(r.exists()){ enterApp('user', r.val().username); return; }
+  }catch(e){}
+  $('#auth').hidden = false;
 });
 
 function logout(){
-  const done = () => location.reload();
-  const tasks = [];
-  try{ tasks.push(remove(ref(db,'presence/'+me.uid)), remove(ref(db,'typing/'+me.uid))); }catch(e){}
-  Promise.allSettled(tasks).finally(() => A.signOut(auth).catch(()=>{}).finally(done));
+  const jobs = [];
+  try{
+    jobs.push(remove(ref(db,'presence/'+me.uid)), remove(ref(db,'aiBusy/'+me.uid)));
+    if(me.role === 'admin') jobs.push(remove(ref(db,'adminClaims/'+me.uid)));
+    else jobs.push(remove(ref(db,'requests/'+me.uid)));
+  }catch(e){}
+  Promise.allSettled(jobs).finally(() => A.signOut(auth).catch(()=>{}).finally(() => location.reload()));
 }
+$('#logout').onclick = logout;
 
 /* ================= MENU ================= */
-const MENUS = [
-  {id:'chat',    ic:'💬', t:'Chat Global'},
-  {id:'online',  ic:'🟢', t:'Anggota Online'},
-  {id:'fav',     ic:'⭐', t:'Favorit'},
-  {id:'upload',  ic:'🖼️', t:'Kirim Gambar'},
-  {id:'search',  ic:'🔍', t:'Pencarian'},
-  {id:'prompts', ic:'✨', t:'Template Pesan'},
-  {id:'emoji',   ic:'😀', t:'Emoji'},
-  {id:'profile', ic:'👤', t:'Profil'},
-  {id:'settings',ic:'⚙️', t:'Pengaturan'},
-  {id:'rules',   ic:'📜', t:'Aturan Chat'},
-  {id:'help',    ic:'❓', t:'Bantuan'},
-  {id:'logout',  ic:'🚪', t:'Keluar'}
-];
+const M = {
+  dash:{ic:'🏠',t:'Dashboard'}, inbox:{ic:'📥',t:'Pesan Masuk'}, chat:{ic:'💬',t:'Chat'}, help:{ic:'✨',t:'Help'},
+  about:{ic:'ℹ️',t:'About'}, settings:{ic:'⚙️',t:'Setting'}, online:{ic:'🟢',t:'Pengguna Online'}
+};
+const ORDER_USER  = ['dash','chat','help','about','settings','online'];
+const ORDER_ADMIN = ['dash','inbox','chat','help','about','settings','online'];
+let menuIds = [];
+
 function buildMenu(){
   const m = $('#menu'); m.innerHTML = '';
-  MENUS.forEach((x,i)=>{
+  menuIds = me.role === 'admin' ? ORDER_ADMIN : ORDER_USER;
+  menuIds.forEach((id,i)=>{
     const d = document.createElement('div');
-    d.className='item'; d.dataset.id=x.id; d.style.animationDelay=(i*60)+'ms';
-    d.innerHTML = `<span class="ic">${x.ic}</span><span>${x.t}</span><span class="badge" id="b-${x.id}"></span>`;
-    d.onclick = () => x.id==='logout' ? logout() : go(x.id);
+    d.className = 'item'; d.dataset.id = id; d.style.animationDelay = (i*60)+'ms';
+    d.innerHTML = `<span class="ic">${M[id].ic}</span><span>${M[id].t}</span><span class="badge" id="b-${id}"></span>`;
+    d.onclick = () => go(id);
     m.appendChild(d);
   });
 }
 function badges(){
-  const set_ = (id,n) => { const b=$('#b-'+id); if(!b) return; b.textContent=n; b.classList.toggle('show',n>0); };
+  const set_ = (id,n) => { const b = $('#b-'+id); if(!b) return; b.textContent = n; b.classList.toggle('show', n>0); };
+  set_('inbox', state.requests.filter(r => r.status==='pending').length);
   set_('chat', unread);
   set_('online', state.online.length);
-  set_('fav', state.favs.length);
 }
 function go(id){
   current = id;
-  if(id==='chat'){ unread = 0; badges(); }
+  if(id === 'chat'){ unread = 0; badges(); }
   document.querySelectorAll('.item').forEach(e => e.classList.toggle('active', e.dataset.id===id));
-  $('#title').textContent = MENUS.find(m=>m.id===id).t;
+  $('#title').textContent = M[id].t;
   document.body.classList.remove('open');
   render();
 }
 function render(){
-  view.classList.toggle('chatmode', current==='chat');
+  view.classList.toggle('chatmode', current==='chat' || current==='help');
   view.style.animation='none'; void view.offsetWidth; view.style.animation='';
   V[current]();
 }
 
+const canChat = () => !!me && (me.role === 'admin' || (myReq && myReq.status === 'accepted'));
+
 /* ================= MASUK APLIKASI ================= */
-function enterApp(){
+function enterApp(role, username){
   if(entered) return;
   entered = true;
+  me = { uid:auth.currentUser.uid, username, role };
   $('#auth').hidden = true; $('#app').hidden = false;
-  try{ state.favs = JSON.parse(ls.get('cg_fav_'+me.uid)||'[]'); }catch(e){ state.favs = []; }
-  $('#who').textContent = me.username;
+  $('#who').textContent = username + ' · ' + (role==='admin' ? 'Admin' : 'Pengguna');
   buildMenu();
   connect();
-  go('chat');
+  go('dash');
 }
 
 function setStatus(ok){
@@ -545,52 +424,62 @@ function setStatus(ok){
 }
 
 function connect(){
-  const myPres = ref(db,'presence/'+me.uid), myTyp = ref(db,'typing/'+me.uid);
-
+  const myPres = ref(db,'presence/'+me.uid);
   onValue(ref(db,'.info/connected'), snap => {
     const ok = snap.val() === true; setStatus(ok);
     if(ok){
-      Promise.all([onDisconnect(myPres).remove(), onDisconnect(myTyp).remove()])
-        .then(() => set(myPres, { username:me.username, gender:me.gender, age:me.age }))
+      onDisconnect(myPres).remove()
+        .then(() => set(myPres, { username:me.username, role:me.role }))
         .catch(()=>{});
     }
   });
-
   onValue(ref(db,'presence'), s => {
     const v = s.val() || {};
     state.online = Object.entries(v).map(([uid,x]) => ({ id:uid, ...x }));
-    badges(); if(current==='online') render();
+    badges(); if(current==='online' || current==='inbox') render();
   });
 
-  onValue(ref(db,'typing'), s => {
-    const v = s.val() || {};
-    typingNames = Object.entries(v).filter(([uid]) => uid !== me.uid).map(([,x]) => x.username);
-    drawTyping();
-  });
+  if(me.role === 'admin'){
+    const q = query(ref(db,'requests'), orderByChild('time'), limitToLast(100));
+    onValue(q, s => {
+      const arr = [];
+      s.forEach(c => { arr.push({ uid:c.key, ...c.val() }); });
+      arr.sort((a,b) => (b.time||0) - (a.time||0));
+      state.requests = arr; badges();
+      if(current === 'inbox') render();
+    });
+    startChat();
+  }else{
+    onValue(ref(db,'requests/'+me.uid), s => {
+      myReq = s.val();
+      if(canChat()) startChat();
+      if(current === 'dash' || current === 'chat') render();
+    });
+  }
+}
 
+/* ================= CHAT ================= */
+let drawQueued = false, forceScroll = false, lastSend = 0;
+function startChat(){
+  if(chatStarted) return;
+  chatStarted = true;
   const q = query(ref(db,'messages'), limitToLast(100));
   onChildAdded(q, snap => {
     const m = { id:snap.key, ...snap.val() };
     if(state.msgs.some(x => x.id === m.id)) return;
     state.msgs.push(m);
     if(state.msgs.length > 300) state.msgs.shift();
-    if(ready && m.uid !== me.uid){
-      beep();
-      if(current !== 'chat'){ unread++; badges(); }
-    }
-    if(current === 'chat') scheduleDraw(m.uid === me.uid);
-  });
+    const mine = m.uid === me.uid || m.by === me.uid;
+    if(ready && !mine && current !== 'chat'){ unread++; badges(); }
+    if(current === 'chat') scheduleDraw(mine);
+  }, () => { chatStarted = false; });
   onValue(q, () => { ready = true; if(current==='chat') scheduleDraw(true); }, { onlyOnce:true });
+  onValue(ref(db,'aiBusy'), s => {
+    const v = s.val() || {};
+    state.aiBusy = Object.values(v).map(x => x.username);
+    drawTyping();
+  });
 }
-
-/* ================= CHAT ================= */
-let iType = false, tTimer = null, drawQueued = false, forceScroll = false, lastSend = 0;
-function setTyping(on){
-  const r = ref(db,'typing/'+me.uid);
-  (on ? set(r, { username:me.username }) : remove(r)).catch(()=>{});
-}
-function stopTyping(){ clearTimeout(tTimer); if(iType){ iType = false; setTyping(false); } }
-
 function scheduleDraw(force){
   forceScroll = forceScroll || !!force;
   if(drawQueued) return;
@@ -598,209 +487,205 @@ function scheduleDraw(force){
   requestAnimationFrame(() => { drawQueued = false; drawMsgs(forceScroll); forceScroll = false; });
 }
 function msgHTML(m){
-  const mine = m.uid === me.uid;
-  const who = mine ? '' : `<div class="who">${avHTML(m.uid, m.username, m.gender, 'sm')}<span>${gIcon(m.gender)} ${esc(m.username)} · ${esc(m.age)} th</span></div>`;
-  let body = '';
-  if(m.img){
-    const iw = Number(m.iw) || 240, ih = Number(m.ih) || 240;
-    const w = Math.min(Math.max(iw, 60), 240), r = Math.min(Math.max(iw/ih, 0.3), 3);
-    body += `<div class="imgbox" data-img="${esc(m.img)}" style="width:${w}px;aspect-ratio:${r.toFixed(3)}"></div>`;
-  }
-  if(m.text) body += `<div>${esc(m.text)}</div>`;
-  const fav = state.favs.some(f => f.id === m.id);
-  return `<div class="msg ${mine?'me':'ot'}">${who}${body}<small>${m.time ? fmtTime(m.time) : ''}</small><button class="star" data-id="${esc(m.id)}">${fav?'⭐':'☆'}</button></div>`;
+  const ai = m.role === 'ai', mine = !ai && m.uid === me.uid;
+  let who = '';
+  if(ai) who = `<div class="who"><span>✨ AI</span></div>`;
+  else if(!mine) who = `<div class="who"><span>${esc(m.username)}</span>${m.role==='admin' ? '<b class="chip ok">Admin</b>' : ''}</div>`;
+  return `<div class="msg ${ai?'ai':mine?'me':'ot'}">${who}<div>${fmtText(m.text)}</div><small>${fmtTime(m.time)}</small></div>`;
 }
 function drawMsgs(force){
   const box = $('#msgs'); if(!box) return;
   const near = box.scrollHeight - box.scrollTop - box.clientHeight < 140;
-  box.innerHTML = state.msgs.length ? state.msgs.map(msgHTML).join('') : empty('💬','Belum ada pesan.<br>Jadi yang pertama menyapa!');
-  hydrateAvatars(box); hydrateImages();
+  box.innerHTML = state.msgs.length ? state.msgs.map(msgHTML).join('') : empty('💬','Belum ada pesan.<br>Mulai percakapan!');
   if(force || near) box.scrollTop = box.scrollHeight;
 }
 function drawTyping(){
   const el = $('#typing'); if(!el) return;
-  const names = typingNames;
-  if(!names.length){ el.innerHTML = ''; return; }
-  const txt = names.length===1 ? names[0] : names.length===2 ? names[0]+' dan '+names[1] : names[0]+', '+names[1]+' dan '+(names.length-2)+' lainnya';
-  el.innerHTML = `<span class="dots"><i></i><i></i><i></i></span><span>${esc(txt)} sedang mengetik...</span>`;
+  const n = state.aiBusy;
+  if(!n.length){ el.innerHTML = ''; return; }
+  const who = n.length === 1 ? 'permintaan ' + esc(n[0]) : n.length + ' permintaan';
+  el.innerHTML = `<span class="dots"><i></i><i></i><i></i></span><span>AI sedang memproses ${who}...</span>`;
   const box = $('#msgs'); if(box && box.scrollHeight-box.scrollTop-box.clientHeight < 160) box.scrollTop = box.scrollHeight;
 }
-function toggleFav(id){
-  const i = state.favs.findIndex(f => f.id === id);
-  if(i >= 0) state.favs.splice(i,1);
-  else{
-    const m = state.msgs.find(x => x.id === id); if(!m) return;
-    state.favs.push({ id:m.id, username:m.username, text:m.text || '📷 Gambar', time:m.time });
+function postMsg(text){
+  return push(ref(db,'messages'), { uid:me.uid, username:me.username, role:me.role, text, time:serverTimestamp() });
+}
+function refreshAiUI(){
+  const b = $('#aiBtn'); if(!b) return;
+  b.classList.toggle('on', aiMode);
+  const h = $('#aiHint'); if(h) h.textContent = aiMode ? 'Mode AI aktif: pesan berikutnya dijawab AI di chat.' : '';
+  const i = $('#inp'); if(i) i.placeholder = aiMode ? 'Tanya atau minta bantuan AI...' : 'Tulis pesan...';
+}
+async function askInChat(q){
+  const ctx = state.msgs.slice(-9, -1).map(m => (m.role==='ai' ? 'AI' : m.username) + ': ' + String(m.text).slice(0, 200)).join('\n');
+  const prompt = (ctx ? 'Percakapan terakhir di chat:\n' + ctx + '\n\n' : '') + 'Pertanyaan dari ' + me.username + ': ' + q;
+  const busyRef = ref(db,'aiBusy/'+me.uid);
+  try{
+    onDisconnect(busyRef).remove().catch(()=>{});
+    await set(busyRef, { username:me.username });
+    const reply = await askAI([{ role:'user', content:prompt }]);
+    await push(ref(db,'messages'), { uid:'ai', username:'AI', role:'ai', by:me.uid, text:reply.slice(0,4000), time:serverTimestamp() });
+  }catch(e){
+    toast(e && e.message && !e.code ? e.message : fbMsg(e));
+  }finally{
+    remove(busyRef).catch(()=>{});
   }
-  ls.set('cg_fav_'+me.uid, JSON.stringify(state.favs));
-  badges();
-  current==='chat' ? drawMsgs() : render();
+}
+
+/* ================= HELP (chat biasa dengan AI) ================= */
+const help = { hist:[], busy:false, loaded:false };
+function loadHelp(){
+  if(help.loaded) return; help.loaded = true;
+  try{ help.hist = JSON.parse(ls.get('sr_help_'+me.uid) || '[]'); }catch(e){ help.hist = []; }
+}
+function saveHelp(){ ls.set('sr_help_'+me.uid, JSON.stringify(help.hist.slice(-30).map(m => ({ role:m.role, text:m.text })))); }
+function drawHelp(force){
+  const box = $('#hmsgs'); if(!box) return;
+  const near = box.scrollHeight - box.scrollTop - box.clientHeight < 140;
+  box.innerHTML = help.hist.length
+    ? help.hist.map(m => {
+        const txt = m.shown !== undefined ? m.text.slice(0, m.shown) : m.text;
+        return `<div class="msg ${m.role==='user'?'me':'ai'}">${m.role==='user'?'':'<div class="who"><span>✨ AI</span></div>'}<div>${fmtText(txt)}</div></div>`;
+      }).join('')
+    : empty('✨','Tanya apa saja ke AI.<br>Contoh: "Bagaimana cara request ke server?"');
+  if(force || near) box.scrollTop = box.scrollHeight;
+  const t = $('#htyping'); if(!t) return;
+  const typing = help.hist.some(m => m.shown !== undefined);
+  t.innerHTML = help.busy
+    ? '<span class="dots"><i></i><i></i><i></i></span><span>AI sedang memproses...</span>'
+    : typing ? '<span class="dots"><i></i><i></i><i></i></span><span>AI sedang mengetik...</span>' : '';
+}
+async function helpSend(text){
+  if(help.busy) return;
+  help.hist.push({ role:'user', text }); saveHelp();
+  help.busy = true; drawHelp(true);
+  try{
+    const msgs = help.hist.slice(-12).map(m => ({ role: m.role==='user' ? 'user' : 'assistant', content: m.text }));
+    const reply = await askAI(msgs);
+    const m = { role:'ai', text:reply, shown:0 };
+    help.hist.push(m); help.busy = false; saveHelp();
+    const step = Math.max(4, Math.ceil(reply.length / 60));
+    const timer = setInterval(() => {
+      m.shown += step;
+      if(m.shown >= m.text.length){ delete m.shown; clearInterval(timer); }
+      if(current === 'help') drawHelp(true);
+    }, 25);
+  }catch(e){
+    help.busy = false;
+    help.hist.push({ role:'ai', text:'⚠️ ' + (e && e.message ? e.message : 'AI gagal menjawab.') });
+    saveHelp();
+  }
+  if(current === 'help') drawHelp(true);
 }
 
 /* ================= VIEWS ================= */
 const V = {};
 
+V.dash = () => {
+  if(me.role === 'admin'){
+    view.innerHTML = `<div class="hero"><div class="big">🛡️</div><h2>Admin</h2><p>Service Request</p></div>`;
+    return;
+  }
+  const s = myReq && myReq.status;
+  if(s === 'accepted'){
+    view.innerHTML = `<div class="hero"><div class="big">✅</div><h2>Request kamu diizinkan</h2><p>Administrator sudah mengizinkan pesan mu. Buka menu Chat untuk mulai.</p></div>`;
+  }else if(s === 'denied'){
+    view.innerHTML = `<div class="hero"><div class="big">❌</div><h2>Request kamu ditolak</h2><p>Administrator tidak mengizinkan pesan mu. Keluar lalu Request lagi jika perlu.</p></div>`;
+  }else{
+    view.innerHTML = `<div class="hero"><div class="big">⏳</div><h2>Kamu sedang Request ke server</h2><p>Harap tunggu Administrator mengizinkan pesan mu</p><div class="dots" style="margin-top:14px"><i></i><i></i><i></i></div></div>`;
+  }
+};
+
+V.inbox = () => {
+  const l = state.requests;
+  if(!l.length){ view.innerHTML = empty('📥','Belum ada request masuk.'); return; }
+  view.innerHTML = `<div class="list">${l.map(r => {
+    const on = state.online.some(o => o.id === r.uid);
+    const left = r.status === 'pending'
+      ? `<div class="req-actions"><button class="btn ok" data-act="accepted" data-uid="${esc(r.uid)}">Accept</button><button class="btn danger" data-act="denied" data-uid="${esc(r.uid)}">Denied</button></div>`
+      : `<span class="chip ${r.status==='accepted'?'ok':'no'}">${r.status==='accepted'?'Diterima':'Ditolak'}</span>`;
+    return `<div class="card">${left}<div class="info"><b>${esc(r.username)}</b><span>${fmtTime(r.time)} • ${on?'online':'offline'}</span></div><span class="dot${on?'':' gray'}"></span></div>`;
+  }).join('')}</div>`;
+  view.querySelectorAll('[data-act]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try{ await update(ref(db,'requests/'+b.dataset.uid), { status:b.dataset.act }); }
+    catch(e){ toast(fbMsg(e)); b.disabled = false; }
+  });
+};
+
 V.chat = () => {
+  if(!canChat()){
+    const s = myReq && myReq.status;
+    view.innerHTML = `<div class="hero"><div class="big">🔒</div><h2>${s==='denied'?'Request ditolak':'Chat belum dibuka'}</h2><p>${s==='denied'?'Administrator tidak mengizinkan pesan mu.':'Harap tunggu Administrator mengizinkan pesan mu.'}</p></div>`;
+    return;
+  }
   view.innerHTML = `<div class="chat-wrap">
     <div class="msgs" id="msgs"></div>
     <div class="typing" id="typing"></div>
+    <div class="aibar"><button class="aibtn" id="aiBtn" type="button">✨ Bantuan AI</button><span class="hint" id="aiHint"></span></div>
     <div class="composer">
-      <button class="btn ghost" id="pic" title="Kirim gambar">🖼️</button>
-      <input type="text" id="inp" placeholder="Tulis pesan untuk semua..." autocomplete="off" maxlength="1000">
+      <input type="text" id="inp" placeholder="Tulis pesan..." autocomplete="off" maxlength="1000">
       <button class="btn" id="send">Kirim</button>
-    </div></div><input type="file" id="picImg" accept="image/*" hidden>`;
+    </div></div>`;
   const inp = $('#inp');
   const send = async () => {
     const v = inp.value.trim();
     const now = Date.now();
-    if(!v || now - lastSend < 300) return;
-    lastSend = now;
-    inp.value = ''; stopTyping();
+    if(!v || sendingChat || now - lastSend < 300) return;
+    lastSend = now; sendingChat = true;
+    inp.value = '';
     try{
-      await push(ref(db,'messages'), { uid:me.uid, username:me.username, gender:me.gender, age:me.age, text:v, time:serverTimestamp() });
-    }catch(e){ toast('Pesan gagal terkirim'); inp.value = v; }
+      if(aiMode){
+        aiMode = false; refreshAiUI();
+        await postMsg('@AI ' + v);
+        sendingChat = false;
+        await askInChat(v);
+      }else{
+        await postMsg(v);
+      }
+    }catch(e){ toast(fbMsg(e)); inp.value = v; }
+    sendingChat = false;
   };
   $('#send').onclick = send;
-  inp.onkeydown = e => { if(e.key==='Enter') send(); };
-  inp.oninput = () => {
-    if(!inp.value.trim()){ stopTyping(); return; }
-    if(!iType){ iType = true; setTyping(true); }
-    clearTimeout(tTimer); tTimer = setTimeout(stopTyping, 2500);
-  };
-  $('#msgs').onclick = e => {
-    const im = e.target.closest('.imgbox img'); if(im){ lightbox(im.src); return; }
-    const b = e.target.closest('.star'); if(b) toggleFav(b.dataset.id);
-  };
-  $('#pic').onclick = () => $('#picImg').click();
-  $('#picImg').onchange = async e => {
-    const f = e.target.files[0]; e.target.value = '';
-    if(!f) return;
-    stopTyping();
-    const ok = await sendImage(f, inp.value.trim());
-    if(ok) inp.value = '';
-  };
-  if(pendingText){ inp.value = pendingText; pendingText = ''; }
-  drawMsgs(true); drawTyping();
-  if(window.matchMedia('(min-width:761px)').matches) inp.focus();
+  inp.onkeydown = e => { if(e.key === 'Enter') send(); };
+  $('#aiBtn').onclick = () => { aiMode = !aiMode; refreshAiUI(); if(aiMode) inp.focus(); };
+  refreshAiUI(); drawMsgs(true); drawTyping();
+};
+
+V.help = () => {
+  loadHelp();
+  view.innerHTML = `<div class="chat-wrap">
+    <div class="msgs" id="hmsgs"></div>
+    <div class="typing" id="htyping"></div>
+    <div class="composer">
+      <button class="btn ghost" id="hclr" title="Hapus percakapan">🗑️</button>
+      <input type="text" id="hinp" placeholder="Tanya AI..." autocomplete="off" maxlength="1000">
+      <button class="btn" id="hsend">Kirim</button>
+    </div></div>`;
+  const inp = $('#hinp');
+  const send = () => { const v = inp.value.trim(); if(!v || help.busy) return; inp.value = ''; helpSend(v); };
+  $('#hsend').onclick = send;
+  inp.onkeydown = e => { if(e.key === 'Enter') send(); };
+  $('#hclr').onclick = () => { if(help.busy) return; help.hist = []; saveHelp(); drawHelp(true); };
+  drawHelp(true);
 };
 
 V.online = () => {
   const l = state.online;
-  view.innerHTML = `<h2 style="margin-top:0">${l.length} anggota online</h2><div class="list">` +
-    l.map(u=>`<div class="card">${avHTML(u.id, u.username, u.gender)}
-      <div class="info"><b>${esc(u.username)}${u.id===me.uid?' (kamu)':''}</b><span>${esc(u.gender)} • ${esc(u.age)} tahun</span></div><span class="dot"></span></div>`).join('') + '</div>';
-  hydrateAvatars(view);
-};
-V.fav = () => {
-  view.innerHTML = state.favs.length
-    ? `<div class="list">${state.favs.map(f=>`<div class="card"><div class="info"><b>⭐ ${esc(f.username)}</b><span style="white-space:normal">${esc(f.text)} • ${f.time?fmtTime(f.time):''}</span></div><button class="btn ghost" data-del="${esc(f.id)}">✖</button></div>`).join('')}</div>`
-    : empty('⭐','Belum ada favorit.<br>Ketuk ikon bintang di pesan chat.');
-  view.querySelectorAll('[data-del]').forEach(b => b.onclick = () => toggleFav(b.dataset.del));
+  view.innerHTML = `<h2 style="margin-top:0">${l.length} pengguna online</h2><div class="list">` +
+    l.map(u => `<div class="card"><div class="av ${u.role==='admin'?'adm':'m'}">${esc((u.username||'?')[0].toUpperCase())}</div>
+      <div class="info"><b>${esc(u.username)}${u.id===me.uid?' (kamu)':''}</b><span>${u.role==='admin'?'Admin':'Pengguna'}</span></div><span class="dot"></span></div>`).join('') + '</div>';
 };
 
-V.upload = () => {
-  view.innerHTML = `<div class="lock" style="margin-top:10px"><div class="big">🖼️</div><h2 style="margin:6px 0">Kirim Gambar</h2>
-    <p>Pilih gambar dari galeri, lalu kirim ke Chat Global. Gambar dikecilkan otomatis.</p>
-    <div id="pv" style="margin:14px 0"></div>
-    <input class="field" id="cap" placeholder="Keterangan (opsional)" maxlength="200">
-    <button class="btn" id="pick">Pilih gambar</button> <button class="btn" id="go" hidden>Kirim ke chat</button>
-    <p style="margin-top:14px;font-size:12.5px;color:var(--muted)">Hanya gambar yang bisa dikirim. Pengiriman file lain tidak tersedia di paket gratis.</p></div>
-    <input type="file" id="f" accept="image/*" hidden>`;
-  let file = null;
-  $('#pick').onclick = () => $('#f').click();
-  $('#f').onchange = e => {
-    file = e.target.files[0] || null; e.target.value = '';
-    if(!file) return;
-    const u = URL.createObjectURL(file);
-    $('#pv').innerHTML = `<img src="${u}" alt="" style="max-width:100%;max-height:260px;border-radius:12px">`;
-    $('#go').hidden = false;
-  };
-  $('#go').onclick = async () => {
-    if(!file) return;
-    $('#go').disabled = true;
-    const ok = await sendImage(file, $('#cap').value.trim());
-    $('#go').disabled = false;
-    if(ok){ toast('Gambar terkirim'); go('chat'); }
-  };
-};
-V.search = () => {
-  view.innerHTML = `<input class="search field" id="q" placeholder="Cari pesan atau anggota online..."><div id="res"></div>`;
-  $('#q').oninput = e => {
-    const q = e.target.value.toLowerCase().trim();
-    if(!q){ $('#res').innerHTML = ''; return; }
-    const m = state.msgs.filter(x => (x.text||'').toLowerCase().includes(q) || (x.username||'').toLowerCase().includes(q)).slice(-30);
-    const u = state.online.filter(x => x.username.toLowerCase().includes(q));
-    $('#res').innerHTML = (m.length||u.length)
-      ? (m.length ? '<h2>Pesan</h2><div class="list">'+m.map(x=>`<div class="card"><div class="info"><b>${esc(x.username)}</b><span style="white-space:normal">${esc(x.text||'📷 Gambar')} • ${x.time?fmtTime(x.time):''}</span></div></div>`).join('')+'</div>' : '') +
-        (u.length ? '<h2>Anggota online</h2><div class="list">'+u.map(x=>`<div class="card">${avHTML(x.id, x.username, x.gender)}<div class="info"><b>${esc(x.username)}</b><span>${esc(x.gender)} • ${esc(x.age)} tahun</span></div></div>`).join('')+'</div>' : '')
-      : empty('🔍','Tidak ditemukan');
-    hydrateAvatars($('#res'));
-  };
-};
-V.prompts = () => {
-  const P = ['Halo semuanya! 👋','Ada yang online?','Selamat pagi semua ☀️','Selamat malam semua 🌙','Terima kasih ya 🙏','Ada yang mau ngobrol bareng?'];
-  view.innerHTML = `<div class="list">${P.map(p=>`<div class="card" style="cursor:pointer" data-p="${esc(p)}"><div style="font-size:22px">✨</div><div class="info"><b>${esc(p)}</b><span>Ketuk untuk dipakai di chat</span></div></div>`).join('')}</div>`;
-  view.querySelectorAll('[data-p]').forEach(c => c.onclick = () => { pendingText = c.dataset.p; go('chat'); });
+V.about = () => {
+  view.innerHTML = `<div class="hero" style="margin-top:30px"><div class="big">🛎️</div><h2>Service Request</h2>
+    <p>Aplikasi permintaan layanan. Pengguna mengirim request dengan username, lalu Administrator menerima atau menolaknya. Setelah diterima, pengguna bisa chat dan memakai bantuan AI.</p>
+    <p style="margin-top:12px;font-size:13px">Versi 1.0</p></div>`;
 };
 
-V.emoji = () => {
-  const E = ['😀','😂','🤣','😍','😎','🥰','😭','😡','👍','🙏','🔥','🎉','❤️','💯','🤔','😴','🙌','👋','😅','🥳','😇','🤝','✨','💬'];
-  view.innerHTML = `<p style="color:var(--muted);font-size:13px;margin-bottom:10px">Ketuk emoji untuk menambahkannya ke kolom chat.</p><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(56px,1fr))">${E.map(e=>`<button class="btn ghost" style="font-size:24px;padding:10px" data-e="${e}">${e}</button>`).join('')}</div>`;
-  view.querySelectorAll('[data-e]').forEach(b => b.onclick = () => { pendingText += b.dataset.e; toast('Ditambahkan, buka Chat Global'); });
-};
-
-V.profile = () => {
-  view.innerHTML = `<div class="profile">${avHTML(me.uid, me.username, me.gender, 'big')}
-    <h2 style="margin:0">${esc(me.username)}</h2>
-    <div style="margin:12px 0"><button class="btn" id="chg">Ganti foto profil</button> <button class="btn ghost" id="del">Hapus foto</button></div>
-    <div class="row"><span>Gender</span><b>${esc(me.gender)}</b></div>
-    <div class="row"><span>Umur</span><b>${esc(me.age)} tahun</b></div>
-    <div class="row"><span>Pesan di layar</span><b>${state.msgs.filter(m=>m.uid===me.uid).length}</b></div></div>
-    <input type="file" id="f" accept="image/*" hidden>`;
-  hydrateAvatars(view);
-  $('#chg').onclick = () => $('#f').click();
-  $('#f').onchange = async e => {
-    const f = e.target.files[0]; e.target.value = '';
-    if(!f) return;
-    try{
-      const { data } = await compress(f, { max:160, square:true, limit:30000 });
-      await set(ref(db,'avatars/'+me.uid), data);
-      avCache.set(me.uid, data); paintAv(me.uid);
-      toast('Foto profil diperbarui');
-    }catch(ex){
-      const m = String((ex && ex.message) || '');
-      toast(m && !m.includes('PERMISSION') ? m : 'Gagal menyimpan. Pastikan Rules terbaru sudah di-Publish.');
-    }
-  };
-  $('#del').onclick = async () => {
-    try{ await remove(ref(db,'avatars/'+me.uid)); avCache.set(me.uid, null); render(); toast('Foto dihapus'); }
-    catch(ex){ toast('Gagal menghapus foto'); }
-  };
-};
 V.settings = () => {
-  view.innerHTML = `<div class="row"><span>Bunyi saat ada pesan baru</span><input type="checkbox" id="snd" ${ls.get('cg_sound')==='0'?'':'checked'} style="width:20px;height:20px"></div>
-    <div class="row"><span>Hapus semua favorit</span><button class="btn ghost" id="cf">Hapus</button></div>
-    <div class="row"><span>Keluar dari akun</span><button class="btn danger" id="lo">Keluar</button></div>`;
-  $('#snd').onchange = e => ls.set('cg_sound', e.target.checked ? '1' : '0');
-  $('#cf').onclick = () => { state.favs = []; ls.set('cg_fav_'+me.uid,'[]'); badges(); toast('Favorit dihapus'); };
-  $('#lo').onclick = logout;
-};
-
-V.rules = () => {
-  const R = ['Bersikap sopan dan saling menghormati.','Dilarang spam, penipuan, dan kata kasar.','Jangan membagikan data pribadi (alamat, nomor HP, password).','Gender dan umur kamu terlihat oleh anggota lain.','Pesan yang sudah terkirim tidak bisa diubah atau dihapus oleh pengguna.'];
-  view.innerHTML = `<div class="list">${R.map((r,i)=>`<div class="card"><div class="av m" style="width:32px;height:32px;font-size:14px">${i+1}</div><div class="info"><b style="white-space:normal">${esc(r)}</b></div></div>`).join('')}</div>`;
-};
-
-V.help = () => {
-  const H = [
-    ['Siapa yang bisa melihat chat?','Semua anggota yang sudah terdaftar. Gender dan umur kamu ikut terlihat.'],
-    ['Apa arti animasi tiga titik?','Itu tanda ada anggota lain yang sedang mengetik.'],
-    ['Cara menyimpan pesan?','Ketuk bintang di pojok pesan, lalu lihat di menu Favorit. Favorit tersimpan di browser ini saja.'],
-    ['Bisa kirim apa saja?','Teks dan gambar. Gambar dikecilkan otomatis. File lain (PDF, dll) tidak tersedia karena paket gratis Firebase tidak menyediakan penyimpanan file.'],
-    ['Cara ganti foto profil?','Buka menu Profil, ketuk Ganti foto profil, lalu pilih gambar dari galeri.'],
-    ['Lupa password?','Belum ada fitur pemulihan karena akun memakai username saja. Hubungi pemilik aplikasi.']
-  ];
-  view.innerHTML = H.map(h=>`<details><summary>${h[0]}</summary><p>${h[1]}</p></details>`).join('');
+  view.innerHTML = `<div class="row"><span>Suara klik saat interaksi</span><input type="checkbox" id="snd" ${ls.get('sr_click')==='0'?'':'checked'} style="width:22px;height:22px"></div>`;
+  $('#snd').onchange = e => { ls.set('sr_click', e.target.checked ? '1' : '0'); if(e.target.checked) clickSound(); };
 };
 
 /* ================= EVENT UMUM ================= */
